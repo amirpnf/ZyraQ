@@ -4,6 +4,7 @@ from flask import request
 from jwt_utils import secret
 from question import Question
 from auth_token import require_token
+from answer import Answer
 import sqlite3
 
 app = Flask(__name__)
@@ -96,6 +97,36 @@ def PostQuestions():
 		
 	except Exception as e:
 		return f'Error saving question: {str(e)}', 500
+	
+@app.route("/answers", methods=['POST'])
+@require_token
+def PostAnswers():
+
+	json_data = request.get_json()
+	if not json_data:
+		return {"error" : "No JSON data provided"}, 400
+	
+	try:
+		answer = Answer.from_json(json_data)
+		if answer.isCorrect not in (0, 1):
+			return {"error" : "isCorrect must be 0 or 1"}, 400
+		if not answer.text or answer.question is None:
+			return {"error" : "Missing text or question ID for the answer"}, 400
+		
+		conn = get_db_connection()
+
+		q = conn.execute("SELECT id FROM Question WHERE id = ?", (answer.question,)).fetchone()
+		if not q:
+			conn.close()
+			return {"error": "Question not found"}, 404
+		
+		saved_answer = Answer.save(answer, conn)
+		conn.close()
+
+		return {"message" : "Answers saved successfully", "answer" : saved_answer.to_json()}, 201
+	
+	except Exception as e:
+		return {"error" : str(e)}, 500
 
 if __name__ == "__main__":
     app.run()
