@@ -5,6 +5,8 @@ from jwt_utils import secret
 from question import Question
 from auth_token import require_token
 import sqlite3
+from player import Player
+
 
 app = Flask(__name__)
 CORS(app)
@@ -106,7 +108,7 @@ def PostQuestions():
         return {
             "id": question_id,
         }, 200
-        
+
     except ValueError as ve:
         print("Validation error:", str(ve))
         return {'error': f'Validation error: {str(ve)}'}, 400
@@ -114,6 +116,41 @@ def PostQuestions():
     except Exception as e:
         print("Error saving question:", str(e))
         return {'error': f'Error saving question: {str(e)}'}, 500
+
+
+@app.route('/participations', methods=['POST'])
+def PostParticipations():
+    try:
+        json_data = request.get_json()
+        
+        if not json_data:
+            return {'error': 'No JSON data provided'}, 400
+        
+        # Validation des champs requis
+        required_fields = ['playerName', 'answers']
+        missing_fields = [field for field in required_fields if not json_data.get(field)]
+        
+        if missing_fields:
+            return {'error': f'Missing required fields: {", ".join(missing_fields)}'}, 400
+        
+        # Créer un objet Player à partir du JSON (validation incluse)
+        player = Player.from_json(json_data)
+        
+        # Sauvegarder en base de données
+        player_id = Player.save(player)
+        
+        return {
+            "message": "Participation saved successfully",
+            "player_id": player_id,
+            "playerName": player.playerName,
+            "score": player.score
+        }, 200
+        
+    except ValueError as ve:
+        return {'error': f'Validation error: {str(ve)}'}, 400
+        
+    except Exception as e:
+        return {'error': f'Error saving participation: {str(e)}'}, 500
 
 if __name__ == "__main__":
     app.run(debug=True)

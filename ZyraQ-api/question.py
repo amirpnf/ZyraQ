@@ -28,7 +28,7 @@ class Question():
                     cur.execute("INSERT INTO Answer (question, text, isCorrect) VALUES (?, ?, ?)",
                                 (question_id, answer.get('text', ''), answer.get('isCorrect', False)))
             
-            # conn.commit()
+            conn.commit()
             print("question_id:", question_id)
             return question_id
         except Exception as e:

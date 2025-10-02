@@ -10,8 +10,14 @@ CREATE TABLE Question (
 
 CREATE TABLE Answer (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    question INTEGER NOT NULL,
+    (questionID, questionPos) INTEGER NOT NULL,
     isCorrect INTEGER NOT NULL CHECK (isCorrect IN (0, 1)),
     text TEXT NOT NULL,
     FOREIGN KEY(question) REFERENCES Question(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Player (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    playerName TEXT NOT NULL,
+    answers TEXT
 );

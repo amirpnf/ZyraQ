@@ -8,8 +8,8 @@ def require_token(func):
     def wrapper(*args, **kwargs):
         token = request.headers.get('Authorization')
         if not token or token.lower() != secret.lower():
-            #print(token)
-            #print(secret)
+            print(token)
+            print(secret)
             return 'Unauthorized', 401
         return func(*args, **kwargs)
     return wrapper
