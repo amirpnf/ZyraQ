@@ -127,6 +127,63 @@ def PostAnswers():
 	
 	except Exception as e:
 		return {"error" : str(e)}, 500
+	
+@app.route("/questions/<int:question_id>", methods=["PUT"])
+@require_token
+def ModifyQuestion(question_id):
+	json_data = request.get_json()
+
+	if not json_data:
+		return {"error" : "No JSON data provided"}, 400
+
+	conn = get_db_connection()
+	existing = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+	if not existing:
+		return {"error" : "Question is not found"}, 400
+	
+	question = Question.from_json(json_data)
+	fields, values = [], []
+	for field in ["title", "text", "image", "difficulty", "position"]:
+		if field in json_data:
+			fields.append(f"{field} = ?")
+			values.append(json_data[field])
+
+	if not fields:
+		conn.close()
+		return {"error" : "No valid fields to update"}, 400
+
+	values.append(question_id)
+	conn.execute(f"UPDATE Question SET {', '.join(fields)} WHERE id = ?", values)
+	conn.commit()
+
+	modified = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+	conn.close()
+
+	return {
+		"id" : modified["id"],
+		"title" : modified["title"],
+		"text" : modified["text"],
+		"difficulty" : modified["difficulty"],
+		"image" : modified["image"],
+		"position" : modified["position"]
+	}, 200
+
+@app.route("/questions/<int:question_id>", methods=["DELETE"])
+@require_token
+def DeleteQuestion(question_id):
+	conn = get_db_connection()
+
+	existing = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+	if not existing:
+		conn.close()
+		return {"error" : "Question not found"}, 404
+
+	conn.execute("DELETE FROM Question WHERE id = ?", (question_id,))
+	conn.commit()
+	conn.close()
+
+	return {"message" : "Question deleted successfully"}, 200
+
 
 if __name__ == "__main__":
     app.run()
