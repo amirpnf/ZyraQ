@@ -184,6 +184,21 @@ def DeleteQuestion(question_id):
 
 	return {"message" : "Question deleted successfully"}, 200
 
+@app.route("/questions/all", methods=["DELETE"])
+@require_token
+def DeleteAllQuestions():
+    conn = get_db_connection()
+    
+    try:
+        conn.execute("DELETE FROM Question")
+        conn.commit()
+        conn.close()
+        return {"message": "All questions deleted successfully"}, 200
+    except Exception as e:
+        conn.close()
+        return {"error": str(e)}, 500
+
+
 
 if __name__ == "__main__":
     app.run()
