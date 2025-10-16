@@ -4,6 +4,7 @@ from flask import request
 from jwt_utils import secret
 from question import Question
 from auth_token import require_token
+from answer import Answer
 import sqlite3
 from player import Player
 

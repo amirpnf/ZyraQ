@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import sqlite3 
 import json
 
@@ -9,11 +10,26 @@ class Question():
         self.position = position
         self.possibleAnswers = possibleAnswers if possibleAnswers is not None else []
     
+=======
+import sqlite3
+import base64
+
+class Question:
+    def __init__(self, title: str, text: str, difficulty: str, image: bytes = None, position: int = None, id: int = None):
+        self.id = id   
+        self.title = title
+        self.text = text
+        self.difficulty = difficulty
+        self.image = image 
+        self.position = position
+
+>>>>>>> Amir_beta
     @staticmethod
     def save(question):
         conn = sqlite3.connect("bdd.db")
         try:
             cur = conn.cursor()
+<<<<<<< HEAD
             print("laaaaaa")
 
             cur.execute("INSERT INTO Question (title, text, image, position) VALUES (?, ?, ?, ?)",
@@ -34,21 +50,38 @@ class Question():
         except Exception as e:
             conn.rollback()
             raise e
+=======
+            cur.execute("""
+                INSERT INTO Question (title, text, difficulty, image, position)
+                VALUES (?, ?, ?, ?, ?)
+            """, (question.title, question.text, question.difficulty, question.image, question.position))
+            conn.commit()
+            question.id = cur.lastrowid
+>>>>>>> Amir_beta
         finally:
             conn.close()
-            
-    # Méthode pour convertir l'objet Python en dictionnaire JSON
+        return question
+
     def to_json(self):
         return {
+<<<<<<< HEAD
             "title": self.title,
             "text": self.text,
             "image": self.image,
             "position": self.position,
+=======
+            "id": self.id,
+            "title": self.title,
+            "text": self.text,
+            "difficulty": self.difficulty,
+            "image": base64.b64encode(self.image).decode("utf-8") if self.image else None,
+            "position": self.position
+>>>>>>> Amir_beta
         }
-    
-    # Méthode statique pour créer un objet Question à partir d'un dictionnaire JSON
+
     @staticmethod
     def from_json(json_data):
+<<<<<<< HEAD
         if not isinstance(json_data, dict):
             raise ValueError("JSON data must be a dictionary")
             
@@ -59,3 +92,15 @@ class Question():
             position=int(json_data.get("position", 0)) if json_data.get("position") is not None else 0,
             possibleAnswers=json_data.get("possibleAnswers", [])
         )
+=======
+        image_data = json_data.get("image")
+        image_bytes = base64.b64decode(image_data) if image_data else None
+
+        return Question(
+            title=json_data.get("title", ""),
+            text=json_data.get("text", ""),
+            difficulty=json_data.get("difficulty", ""),
+            image=image_bytes,
+            position=json_data.get("position")
+        )
+>>>>>>> Amir_beta
