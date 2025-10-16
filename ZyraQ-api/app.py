@@ -86,23 +86,20 @@ def GetQuestionByPosition():
 def PostQuestions():
     try:
         json_data = request.get_json()
-        # print("Received JSON data:", json_data)
         
         if not json_data:
             return {'error': 'No JSON data provided'}, 400
         
-        # Validation basique des champs requis
         required_fields = ['text', 'title']
         missing_fields = [field for field in required_fields if not json_data.get(field)]
         
         if missing_fields:
             return {'error': f'Missing required fields: {", ".join(missing_fields)}'}, 400
         
-        # Créer un objet Question à partir du JSON
-        question = Question.from_json(json_data)
+        difficulty = json_data.get("difficulty", "easy")
+        question = Question.from_json({**json_data, "difficulty": difficulty})
         print("Question created:", question.title)
 
-        # Sauvegarder en base de données
         question_id = Question.save(question)
         print("Question saved with ID:", question_id)
 
@@ -119,6 +116,7 @@ def PostQuestions():
         return {'error': f'Error saving question: {str(e)}'}, 500
 
 
+
 @app.route('/participations', methods=['POST'])
 def PostParticipations():
     try:
@@ -127,17 +125,14 @@ def PostParticipations():
         if not json_data:
             return {'error': 'No JSON data provided'}, 400
         
-        # Validation des champs requis
         required_fields = ['playerName', 'answers']
         missing_fields = [field for field in required_fields if not json_data.get(field)]
         
         if missing_fields:
             return {'error': f'Missing required fields: {", ".join(missing_fields)}'}, 400
         
-        # Créer un objet Player à partir du JSON (validation incluse)
         player = Player.from_json(json_data)
         
-        # Sauvegarder en base de données
         player_id = Player.save(player)
         
         return {
@@ -152,6 +147,107 @@ def PostParticipations():
         
     except Exception as e:
         return {'error': f'Error saving participation: {str(e)}'}, 500
+    
+@app.route("/answers", methods=['POST'])
+@require_token
+def PostAnswers():
+
+	json_data = request.get_json()
+	if not json_data:
+		return {"error" : "No JSON data provided"}, 400
+	
+	try:
+		answer = Answer.from_json(json_data)
+		if answer.isCorrect not in (0, 1):
+			return {"error" : "isCorrect must be 0 or 1"}, 400
+		if not answer.text or answer.question is None:
+			return {"error" : "Missing text or question ID for the answer"}, 400
+		
+		conn = get_db_connection()
+
+		q = conn.execute("SELECT id FROM Question WHERE id = ?", (answer.question,)).fetchone()
+		if not q:
+			conn.close()
+			return {"error": "Question not found"}, 404
+		
+		saved_answer = Answer.save(answer, conn)
+		conn.close()
+
+		return {"message" : "Answers saved successfully", "answer" : saved_answer.to_json()}, 201
+	
+	except Exception as e:
+		return {"error" : str(e)}, 500
+	
+@app.route("/questions/<int:question_id>", methods=["PUT"])
+@require_token
+def ModifyQuestion(question_id):
+	json_data = request.get_json()
+
+	if not json_data:
+		return {"error" : "No JSON data provided"}, 400
+
+	conn = get_db_connection()
+	existing = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+	if not existing:
+		return {"error" : "Question is not found"}, 400
+	
+	question = Question.from_json(json_data)
+	fields, values = [], []
+	for field in ["title", "text", "image", "difficulty", "position"]:
+		if field in json_data:
+			fields.append(f"{field} = ?")
+			values.append(json_data[field])
+
+	if not fields:
+		conn.close()
+		return {"error" : "No valid fields to update"}, 400
+
+	values.append(question_id)
+	conn.execute(f"UPDATE Question SET {', '.join(fields)} WHERE id = ?", values)
+	conn.commit()
+
+	modified = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+	conn.close()
+
+	return {
+		"id" : modified["id"],
+		"title" : modified["title"],
+		"text" : modified["text"],
+		"difficulty" : modified["difficulty"],
+		"image" : modified["image"],
+		"position" : modified["position"]
+	}, 200
+
+@app.route("/questions/<int:question_id>", methods=["DELETE"])
+@require_token
+def DeleteQuestion(question_id):
+	conn = get_db_connection()
+
+	existing = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+	if not existing:
+		conn.close()
+		return {"error" : "Question not found"}, 404
+
+	conn.execute("DELETE FROM Question WHERE id = ?", (question_id,))
+	conn.commit()
+	conn.close()
+
+	return {"message" : "Question deleted successfully"}, 200
+
+@app.route("/questions/all", methods=["DELETE"])
+@require_token
+def DeleteAllQuestions():
+    conn = get_db_connection()
+    
+    try:
+        conn.execute("DELETE FROM Question")
+        conn.commit()
+        conn.close()
+        return {"message": "All questions deleted successfully"}, 200
+    except Exception as e:
+        conn.close()
+        return {"error": str(e)}, 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
