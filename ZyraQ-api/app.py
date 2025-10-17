@@ -89,28 +89,71 @@ def PostQuestions():
         
         if not json_data:
             return {'error': 'No JSON data provided'}, 400
-        
-        required_fields = ['text', 'title']
+
+        required_fields = ['text', 'title', 'position']
         missing_fields = [field for field in required_fields if not json_data.get(field)]
-        
         if missing_fields:
-            return {'error': f'Missing required fields: {", ".join(missing_fields)}'}, 400
+            return {'error': f"Missing required fields: {', '.join(missing_fields)}"}, 400
         
+        position = json_data['position']
         difficulty = json_data.get("difficulty", "easy")
         question = Question.from_json({**json_data, "difficulty": difficulty})
         print("Question created:", question.title)
 
-        question_id = Question.save(question)
-        print("Question saved with ID:", question_id)
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-        return {
-            "id": question_id,
-        }, 200
+        # Check if position already exists
+        existing = cursor.execute(
+            "SELECT id, position FROM Question WHERE position = ?", (position,)
+        ).fetchone()
+
+        if existing:
+            # Swap positions
+            temp_position = cursor.execute("SELECT MAX(position) FROM Question").fetchone()[0] or 0
+            temp_position += 1
+            cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (temp_position, existing['id']))
+            conn.commit()
+
+        # Insert the new question
+        cursor.execute(
+            "INSERT INTO Question (title, text, position, image, difficulty) VALUES (?, ?, ?, ?, ?)",
+            (question.title, question.text, position, question.image, question.difficulty)
+        )
+        new_id = cursor.lastrowid
+        conn.commit()
+        print(f"Inserted new question ID {new_id} at position {position}")
+
+        # Insert possible answers if available
+        if hasattr(question, "possibleAnswers") and question.possibleAnswers:
+            for ans in question.possibleAnswers:
+                # Each answer should have: text and isCorrect
+                answer_text = ans.get("text")
+                is_correct = ans.get("isCorrect", 0)
+                cursor.execute(
+                    "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
+                    (answer_text, is_correct, new_id)
+                )
+            conn.commit()
+            print(f"Inserted {len(question.possibleAnswers)} answers for question ID {new_id}")
+
+        # Handle old position if we did a swap
+        if existing:
+            old_pos = json_data.get("old_position")
+            if old_pos is not None:
+                cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (old_pos, existing['id']))
+            else:
+                cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (temp_position, existing['id']))
+            conn.commit()
+            print(f"Swapped old question ID {existing['id']} back to position")
+
+        conn.close()
+        return {"id": new_id}, 200
 
     except ValueError as ve:
         print("Validation error:", str(ve))
         return {'error': f'Validation error: {str(ve)}'}, 400
-        
+
     except Exception as e:
         print("Error saving question:", str(e))
         return {'error': f'Error saving question: {str(e)}'}, 500
@@ -181,42 +224,59 @@ def PostAnswers():
 @app.route("/questions/<int:question_id>", methods=["PUT"])
 @require_token
 def ModifyQuestion(question_id):
-	json_data = request.get_json()
+    json_data = request.get_json()
 
-	if not json_data:
-		return {"error" : "No JSON data provided"}, 400
+    if not json_data:
+        return {"error": "No JSON data provided"}, 400
 
-	conn = get_db_connection()
-	existing = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
-	if not existing:
-		return {"error" : "Question is not found"}, 400
-	
-	question = Question.from_json(json_data)
-	fields, values = [], []
-	for field in ["title", "text", "image", "difficulty", "position"]:
-		if field in json_data:
-			fields.append(f"{field} = ?")
-			values.append(json_data[field])
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-	if not fields:
-		conn.close()
-		return {"error" : "No valid fields to update"}, 400
+    existing = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+    if not existing:
+        conn.close()
+        return {"error": "Question not found"}, 404
 
-	values.append(question_id)
-	conn.execute(f"UPDATE Question SET {', '.join(fields)} WHERE id = ?", values)
-	conn.commit()
+    new_position = json_data.get("position")
+    if new_position is not None and new_position != existing["position"]:
+        conflict = cursor.execute(
+            "SELECT id, position FROM Question WHERE position = ? AND id != ?",
+            (new_position, question_id)
+        ).fetchone()
 
-	modified = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
-	conn.close()
+        if conflict:
+            print(f"Position conflict detected: swapping {existing['id']} (pos {existing['position']}) "
+                  f"and {conflict['id']} (pos {conflict['position']})")
 
-	return {
-		"id" : modified["id"],
-		"title" : modified["title"],
-		"text" : modified["text"],
-		"difficulty" : modified["difficulty"],
-		"image" : modified["image"],
-		"position" : modified["position"]
-	}, 200
+            cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (existing["position"], conflict["id"]))
+            conn.commit()
+
+    fields, values = [], []
+    for field in ["title", "text", "image", "difficulty", "position"]:
+        if field in json_data:
+            fields.append(f"{field} = ?")
+            values.append(json_data[field])
+
+    if not fields:
+        conn.close()
+        return {"error": "No valid fields to update"}, 400
+
+    values.append(question_id)
+    cursor.execute(f"UPDATE Question SET {', '.join(fields)} WHERE id = ?", values)
+    conn.commit()
+
+    modified = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+    conn.close()
+
+    return {
+        "id": modified["id"],
+        "title": modified["title"],
+        "text": modified["text"],
+        "difficulty": modified["difficulty"],
+        "image": modified["image"],
+        "position": modified["position"]
+    }, 204
+
 
 @app.route("/questions/<int:question_id>", methods=["DELETE"])
 @require_token
@@ -241,9 +301,11 @@ def DeleteAllQuestions():
     
     try:
         conn.execute("DELETE FROM Question")
+        conn.execute("DELETE FROM sqlite_sequence WHERE name='Question'")
+
         conn.commit()
         conn.close()
-        return {"message": "All questions deleted successfully"}, 200
+        return {"message": "All questions deleted successfully"}, 204
     except Exception as e:
         conn.close()
         return {"error": str(e)}, 500

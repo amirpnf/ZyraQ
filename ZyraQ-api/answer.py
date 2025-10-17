@@ -24,11 +24,15 @@ class Answer:
 
     @staticmethod
     def save(answer, conn):
+        """
+        Save an Answer instance to the database.
+        """
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO Answer (question, text, isCorrect) VALUES (?, ?, ?)",
-            (answer.question, answer.text, answer.isCorrect)
+            "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
+            (answer.text, answer.isCorrect, answer.question)
         )
+
         conn.commit()
         answer.id = cur.lastrowid
         return answer

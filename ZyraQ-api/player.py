@@ -21,6 +21,7 @@ class Player():
             """)
             
             questions = cur.fetchall()
+            #print(questions)
             score = 0
             
             for i, (question_id,) in enumerate(questions):
@@ -30,11 +31,13 @@ class Player():
                     cur.execute("""
                         SELECT id, isCorrect
                         FROM Answer
-                        WHERE question = ?
+                        WHERE question_id = ?
                         ORDER BY id
                     """, (question_id,))
                     
                     question_answers = cur.fetchall()
+                    print(question_answers)
+                    
                     
                     if 1 <= player_choice <= len(question_answers):
                         answer_id, is_correct = question_answers[player_choice - 1] 
