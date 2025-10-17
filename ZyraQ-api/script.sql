@@ -19,5 +19,6 @@ CREATE TABLE Answer (
 CREATE TABLE Player (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     playerName TEXT NOT NULL,
-    answers TEXT
+    answers TEXT,
+    score INTEGER DEFAULT
 );

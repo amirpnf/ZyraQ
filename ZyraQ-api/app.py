@@ -190,6 +190,19 @@ def PostParticipations():
         
     except Exception as e:
         return {'error': f'Error saving participation: {str(e)}'}, 500
+
+@app.route('/participations/all', methods=['DELETE'])
+@require_token
+def DeleteAllParticipations():
+    try:
+        rows_affected = Player.delete_all_participations()
+        
+        return {
+            "players_deleted": rows_affected
+        }, 204
+        
+    except Exception as e:
+        return {'error': f'Error deleting participations: {str(e)}'}, 500
     
 @app.route("/answers", methods=['POST'])
 @require_token

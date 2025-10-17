@@ -74,6 +74,25 @@ class Player():
 
             conn.close()
     
+    @staticmethod
+    def delete_all_participations():
+        """Supprime tous les utilisateurs/joueurs de la base de données"""
+        conn = sqlite3.connect("bdd.db", timeout=20.0)
+        try:
+            cur = conn.cursor()
+            
+            # Supprimer tous les joueurs
+            cur.execute("DELETE FROM Player")
+            
+            rows_affected = cur.rowcount
+            conn.commit()
+            return rows_affected
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+    
     def to_json(self):
         return {
             "playerName": self.playerName,
