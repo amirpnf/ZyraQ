@@ -40,22 +40,39 @@ def PostLogin():
 @app.route('/questions/<int:question_id>', methods=['GET'])
 @require_token
 def GetQuestionById(question_id):
-	conn = get_db_connection()
+    conn = get_db_connection()
 
-	question_row = conn.execute(f"SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+    question_row = conn.execute(
+        "SELECT * FROM Question WHERE id = ?", (question_id,)
+    ).fetchone()
 
-	if not question_row :
-		conn.close()
-		return {"error": "Question not found"}, 404
-	
-	conn.close()
-	return {
-		"id" : question_row["id"],
-		"title" : question_row["title"],
-		"text" : question_row["text"],
-		"position" : question_row["position"],
-		"image" : question_row["image"]
-	}, 200
+    if not question_row:
+        conn.close()
+        return {"error": "Question not found"}, 404
+
+    answers_rows = conn.execute(
+        "SELECT * FROM Answer WHERE question_id = ? ORDER BY id",
+        (question_id,)
+    ).fetchall()
+
+
+    possible_answers = [
+        {"id": a["id"], "text": a["text"], "isCorrect": bool(a["isCorrect"])}
+        for a in answers_rows
+    ]
+
+
+    conn.close()
+
+    return {
+        "id": question_row["id"],
+        "title": question_row["title"],
+        "text": question_row["text"],
+        "position": question_row["position"],
+        "image": question_row["image"],
+        "possibleAnswers": possible_answers
+    }, 200
+
 
 @app.route('/questions', methods=['GET'])
 @require_token
@@ -300,7 +317,6 @@ def DeleteQuestion(question_id):
 	if not existing:
 		conn.close()
 		return {"error" : "Question not found"}, 404
-
 	conn.execute("DELETE FROM Question WHERE id = ?", (question_id,))
 	conn.commit()
 	conn.close()
@@ -322,6 +338,58 @@ def DeleteAllQuestions():
     except Exception as e:
         conn.close()
         return {"error": str(e)}, 500
+
+@app.route('/rebuild-db', methods=['POST'])
+@require_token
+def RebuildDatabase():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("DROP TABLE IF EXISTS Answer")
+        cursor.execute("DROP TABLE IF EXISTS Question")
+        cursor.execute("DROP TABLE IF EXISTS Player")
+        
+        cursor.execute("""
+            CREATE TABLE Question (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                text TEXT NOT NULL,
+                difficulty TEXT NOT NULL DEFAULT 'easy',
+                image BLOB,
+                position INTEGER
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE Answer (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question_id INTEGER NOT NULL,
+                isCorrect INTEGER NOT NULL CHECK (isCorrect IN (0, 1)),
+                text TEXT NOT NULL,
+                FOREIGN KEY(question_id) REFERENCES Question(id) ON DELETE CASCADE
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE Player (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                playerName TEXT NOT NULL,
+                answers TEXT,
+                score INTEGER DEFAULT 0
+            )
+        """)
+        
+        conn.commit()
+        conn.close()
+        return "Ok", 200
+
+    except Exception as e:
+        if conn:
+            conn.close()
+        return {"error": str(e)}, 500
+
+
 
 
 if __name__ == "__main__":
