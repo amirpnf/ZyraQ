@@ -50,17 +50,16 @@ def GetQuestionById(question_id):
         conn.close()
         return {"error": "Question not found"}, 404
 
+    # Fetch answers ordered by rowid (insertion order)
     answers_rows = conn.execute(
-        "SELECT * FROM Answer WHERE question_id = ? ORDER BY id",
+        "SELECT id, text, isCorrect FROM Answer WHERE question_id = ? ORDER BY rowid ASC",
         (question_id,)
     ).fetchall()
-
 
     possible_answers = [
         {"id": a["id"], "text": a["text"], "isCorrect": bool(a["isCorrect"])}
         for a in answers_rows
     ]
-
 
     conn.close()
 
@@ -72,6 +71,7 @@ def GetQuestionById(question_id):
         "image": question_row["image"],
         "possibleAnswers": possible_answers
     }, 200
+
 
 
 @app.route('/questions', methods=['GET'])
@@ -90,11 +90,12 @@ def GetQuestionByPosition():
         conn.close()
         return {"error": "No questions found at this position"}, 404
 
+    # Fetch answers ordered by rowid (insertion order)
     answers = conn.execute("""
-        SELECT text, isCorrect
+        SELECT id, text, isCorrect
         FROM Answer
         WHERE question_id = ?
-        ORDER BY id ASC
+        ORDER BY rowid ASC
     """, (q["id"],)).fetchall()
 
     conn.close()
@@ -106,11 +107,13 @@ def GetQuestionByPosition():
         "position": q["position"],
         "image": q["image"] if q["image"] is not None else "",
         "possibleAnswers": [
-            {"text": a["text"], "isCorrect": bool(a["isCorrect"])} for a in answers
+            {"id": a["id"], "text": a["text"], "isCorrect": bool(a["isCorrect"])} for a in answers
         ]
     }
 
     return question_data, 200
+
+
 
 	
 
@@ -119,7 +122,6 @@ def GetQuestionByPosition():
 def PostQuestions():
     try:
         json_data = request.get_json()
-        
         if not json_data:
             return {'error': 'No JSON data provided'}, 400
 
@@ -127,69 +129,50 @@ def PostQuestions():
         missing_fields = [field for field in required_fields if not json_data.get(field)]
         if missing_fields:
             return {'error': f"Missing required fields: {', '.join(missing_fields)}"}, 400
-        
+
         position = json_data['position']
         difficulty = json_data.get("difficulty", "easy")
-        question = Question.from_json({**json_data, "difficulty": difficulty})
-        print("Question created:", question.title)
+        
+        # Use the raw possibleAnswers from the JSON directly
+        possible_answers = json_data.get("possibleAnswers", [])
 
+        # Create question object without modifying answers
+        question = Question.from_json({**json_data, "difficulty": difficulty})
+        
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Check if position already exists
-        existing = cursor.execute(
-            "SELECT id, position FROM Question WHERE position = ?", (position,)
-        ).fetchone()
+        # Shift existing questions at or after the new position
+        cursor.execute(
+            "UPDATE Question SET position = position + 1 WHERE position >= ?",
+            (position,)
+        )
 
-        if existing:
-            # Swap positions
-            temp_position = cursor.execute("SELECT MAX(position) FROM Question").fetchone()[0] or 0
-            temp_position += 1
-            cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (temp_position, existing['id']))
-            conn.commit()
-
-        # Insert the new question
+        # Insert new question
         cursor.execute(
             "INSERT INTO Question (title, text, position, image, difficulty) VALUES (?, ?, ?, ?, ?)",
             (question.title, question.text, position, question.image, question.difficulty)
         )
         new_id = cursor.lastrowid
+
+        # Insert answers preserving order
+        for ans in possible_answers:
+            if "text" not in ans or ans["text"] is None:
+                continue  # skip invalid answers
+            is_correct = int(ans.get("isCorrect", 0))
+            cursor.execute(
+                "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
+                (ans["text"], is_correct, new_id)
+            )
+
         conn.commit()
-        print(f"Inserted new question ID {new_id} at position {position}")
-
-        # Insert possible answers if available
-        if hasattr(question, "possibleAnswers") and question.possibleAnswers:
-            for ans in question.possibleAnswers:
-                # Each answer should have: text and isCorrect
-                answer_text = ans.get("text")
-                is_correct = ans.get("isCorrect", 0)
-                cursor.execute(
-                    "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
-                    (answer_text, is_correct, new_id)
-                )
-            conn.commit()
-            print(f"Inserted {len(question.possibleAnswers)} answers for question ID {new_id}")
-
-        # Handle old position if we did a swap
-        if existing:
-            old_pos = json_data.get("old_position")
-            if old_pos is not None:
-                cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (old_pos, existing['id']))
-            else:
-                cursor.execute("UPDATE Question SET position = ? WHERE id = ?", (temp_position, existing['id']))
-            conn.commit()
-            print(f"Swapped old question ID {existing['id']} back to position")
-
         conn.close()
         return {"id": new_id}, 200
 
-    except ValueError as ve:
-        print("Validation error:", str(ve))
-        return {'error': f'Validation error: {str(ve)}'}, 400
-
     except Exception as e:
-        print("Error saving question:", str(e))
         return {'error': f'Error saving question: {str(e)}'}, 500
+
+
 
 
 
@@ -277,13 +260,29 @@ def ModifyQuestion(question_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Fetch existing question
     existing = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
     if not existing:
         conn.close()
         return {"error": "Question not found"}, 404
 
-    cursor.execute("DELETE FROM Answer WHERE question_id = ?", (question_id,))
+    old_position = existing["position"]
+    new_position = json_data.get("position", old_position)
 
+    # Adjust positions of other questions if moving
+    if new_position != old_position:
+        if new_position < old_position:
+            cursor.execute(
+                "UPDATE Question SET position = position + 1 WHERE position >= ? AND position < ?",
+                (new_position, old_position)
+            )
+        else:
+            cursor.execute(
+                "UPDATE Question SET position = position - 1 WHERE position <= ? AND position > ?",
+                (new_position, old_position)
+            )
+
+    # Update question fields
     fields, values = [], []
     for field in ["title", "text", "image", "difficulty", "position"]:
         if field in json_data:
@@ -294,21 +293,24 @@ def ModifyQuestion(question_id):
         values.append(question_id)
         cursor.execute(f"UPDATE Question SET {', '.join(fields)} WHERE id = ?", values)
 
-    possible_answers = json_data.get("possibleAnswers", [])
-    for ans in possible_answers:
-        answer_text = ans.get("text")
-        is_correct = int(ans.get("isCorrect", 0))
-        cursor.execute(
-            "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
-            (answer_text, is_correct, question_id)
-        )
+    # Replace answers only if provided
+    if "possibleAnswers" in json_data:
+        cursor.execute("DELETE FROM Answer WHERE question_id = ?", (question_id,))
+        for ans in json_data["possibleAnswers"]:
+            if "text" not in ans or ans["text"] is None:
+                continue
+            is_correct = int(ans.get("isCorrect", 0))
+            cursor.execute(
+                "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
+                (ans["text"], is_correct, question_id)
+            )
 
     conn.commit()
 
+    # Fetch updated question with answers, preserving insertion order
     modified = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
-
     answers = cursor.execute(
-        "SELECT id, text, isCorrect FROM Answer WHERE question_id = ? ORDER BY id",
+        "SELECT id, text, isCorrect FROM Answer WHERE question_id = ? ORDER BY rowid ASC",
         (question_id,)
     ).fetchall()
 
@@ -327,21 +329,42 @@ def ModifyQuestion(question_id):
     }, 204
 
 
+
+
+
+
 @app.route("/questions/<int:question_id>", methods=["DELETE"])
 @require_token
 def DeleteQuestion(question_id):
-    with get_db_connection() as conn:
-        existing = conn.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
-        if not existing:
-            return {"error": "Question not found"}, 404
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-        conn.execute("DELETE FROM Answer WHERE question_id = ?", (question_id,))
+    # Fetch question
+    q = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
+    if not q:
+        conn.close()
+        return {"error": "Question not found"}, 404
 
-        conn.execute("DELETE FROM Question WHERE id = ?", (question_id,))
+    deleted_position = q["position"]
 
-        conn.commit()
+    # Delete answers
+    cursor.execute("DELETE FROM Answer WHERE question_id = ?", (question_id,))
+    # Delete question
+    cursor.execute("DELETE FROM Question WHERE id = ?", (question_id,))
 
-    return {"message": "Question and its answers deleted successfully"}, 204
+    # Shift down positions of questions after deleted one
+    cursor.execute(
+        "UPDATE Question SET position = position - 1 WHERE position > ?",
+        (deleted_position,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Question deleted successfully"}, 204
+
+
+
 
 
 @app.route("/questions/all", methods=["DELETE"])
