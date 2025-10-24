@@ -27,7 +27,19 @@ def hello_world():
 
 @app.route('/quiz-info', methods=['GET'])
 def GetQuizInfo():
-    return {"size": 0, "scores": []}, 200
+    conn = get_db_connection()
+    questions = conn.execute("SELECT id, title, position FROM Question ORDER BY position ASC").fetchall()
+    conn.close()
+
+    # Prepare the quiz info
+    quiz_info = {
+        "size": len(questions),
+        "questions": [{"id": q["id"], "title": q["title"], "position": q["position"]} for q in questions],
+        "scores": []  # keep this if you plan to add score info later
+    }
+
+    return quiz_info, 200
+
 
 
 @app.route('/login', methods=['POST'])
