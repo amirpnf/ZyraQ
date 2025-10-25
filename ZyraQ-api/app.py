@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from flask import request
-from jwt_utils import secret
+from jwt_utils import secret, build_token
 from question import Question
 from auth_token import require_token
 from answer import Answer
@@ -28,25 +28,33 @@ def hello_world():
 @app.route('/quiz-info', methods=['GET'])
 def GetQuizInfo():
     conn = get_db_connection()
+    
     questions = conn.execute("SELECT id, title, position FROM Question ORDER BY position ASC").fetchall()
+    
+    scores = conn.execute("""
+        SELECT playerName, score
+        FROM Player
+        ORDER BY score DESC
+    """).fetchall()
+    
     conn.close()
 
-    # Prepare the quiz info
     quiz_info = {
         "size": len(questions),
-        "questions": [{"id": q["id"], "title": q["title"], "position": q["position"]} for q in questions],
-        "scores": []  # keep this if you plan to add score info later
+        "scores": [
+            {"playerName": s["playerName"], "score": s["score"]} for s in scores
+        ]
     }
 
     return quiz_info, 200
-
 
 
 @app.route('/login', methods=['POST'])
 def PostLogin():
     payload = request.get_json()
     if payload and payload.get("password") == "OuiStiti":	
-        return {"token": secret}, 200
+        token = build_token()
+        return {"token": token}, 200
     return 'Unauthorized', 401
 
 @app.route('/questions/<int:question_id>', methods=['GET'])
@@ -62,7 +70,6 @@ def GetQuestionById(question_id):
         conn.close()
         return {"error": "Question not found"}, 404
 
-    # Fetch answers ordered by rowid (insertion order)
     answers_rows = conn.execute(
         "SELECT id, text, isCorrect FROM Answer WHERE question_id = ? ORDER BY rowid ASC",
         (question_id,)
@@ -102,7 +109,6 @@ def GetQuestionByPosition():
         conn.close()
         return {"error": "No questions found at this position"}, 404
 
-    # Fetch answers ordered by rowid (insertion order)
     answers = conn.execute("""
         SELECT id, text, isCorrect
         FROM Answer
@@ -125,10 +131,6 @@ def GetQuestionByPosition():
 
     return question_data, 200
 
-
-
-	
-
 @app.route('/questions', methods=['POST'])
 @require_token
 def PostQuestions():
@@ -145,32 +147,27 @@ def PostQuestions():
         position = json_data['position']
         difficulty = json_data.get("difficulty", "easy")
         
-        # Use the raw possibleAnswers from the JSON directly
         possible_answers = json_data.get("possibleAnswers", [])
 
-        # Create question object without modifying answers
         question = Question.from_json({**json_data, "difficulty": difficulty})
         
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Shift existing questions at or after the new position
         cursor.execute(
             "UPDATE Question SET position = position + 1 WHERE position >= ?",
             (position,)
         )
 
-        # Insert new question
         cursor.execute(
             "INSERT INTO Question (title, text, position, image, difficulty) VALUES (?, ?, ?, ?, ?)",
             (question.title, question.text, position, question.image, question.difficulty)
         )
         new_id = cursor.lastrowid
 
-        # Insert answers preserving order
         for ans in possible_answers:
             if "text" not in ans or ans["text"] is None:
-                continue  # skip invalid answers
+                continue  
             is_correct = int(ans.get("isCorrect", 0))
             cursor.execute(
                 "INSERT INTO Answer (text, isCorrect, question_id) VALUES (?, ?, ?)",
@@ -272,7 +269,6 @@ def ModifyQuestion(question_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Fetch existing question
     existing = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
     if not existing:
         conn.close()
@@ -281,7 +277,6 @@ def ModifyQuestion(question_id):
     old_position = existing["position"]
     new_position = json_data.get("position", old_position)
 
-    # Adjust positions of other questions if moving
     if new_position != old_position:
         if new_position < old_position:
             cursor.execute(
@@ -294,7 +289,6 @@ def ModifyQuestion(question_id):
                 (new_position, old_position)
             )
 
-    # Update question fields
     fields, values = [], []
     for field in ["title", "text", "image", "difficulty", "position"]:
         if field in json_data:
@@ -305,7 +299,6 @@ def ModifyQuestion(question_id):
         values.append(question_id)
         cursor.execute(f"UPDATE Question SET {', '.join(fields)} WHERE id = ?", values)
 
-    # Replace answers only if provided
     if "possibleAnswers" in json_data:
         cursor.execute("DELETE FROM Answer WHERE question_id = ?", (question_id,))
         for ans in json_data["possibleAnswers"]:
@@ -319,7 +312,6 @@ def ModifyQuestion(question_id):
 
     conn.commit()
 
-    # Fetch updated question with answers, preserving insertion order
     modified = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
     answers = cursor.execute(
         "SELECT id, text, isCorrect FROM Answer WHERE question_id = ? ORDER BY rowid ASC",
@@ -351,7 +343,6 @@ def DeleteQuestion(question_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Fetch question
     q = cursor.execute("SELECT * FROM Question WHERE id = ?", (question_id,)).fetchone()
     if not q:
         conn.close()
@@ -359,12 +350,9 @@ def DeleteQuestion(question_id):
 
     deleted_position = q["position"]
 
-    # Delete answers
     cursor.execute("DELETE FROM Answer WHERE question_id = ?", (question_id,))
-    # Delete question
     cursor.execute("DELETE FROM Question WHERE id = ?", (question_id,))
 
-    # Shift down positions of questions after deleted one
     cursor.execute(
         "UPDATE Question SET position = position - 1 WHERE position > ?",
         (deleted_position,)

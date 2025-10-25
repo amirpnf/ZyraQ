@@ -21,7 +21,6 @@ class Player():
             """)
             
             questions = cur.fetchall()
-            #print(questions)
             score = 0
             
             for i, (question_id,) in enumerate(questions):
@@ -81,7 +80,6 @@ class Player():
         try:
             cur = conn.cursor()
             
-            # Supprimer tous les joueurs
             cur.execute("DELETE FROM Player")
             
             rows_affected = cur.rowcount
@@ -105,12 +103,10 @@ class Player():
         if not isinstance(json_data, dict):
             raise ValueError("JSON data must be a dictionary")
         
-        # Vérifier que answers est une liste
         answers = json_data.get("answers", [])
         if not isinstance(answers, list):
             raise ValueError("answers must be a list")
         
-        # Vérifier que answers contient exactement 10 éléments
         if len(answers) != 10:
             raise ValueError(f"answers must contain exactly 10 elements, got {len(answers)}")
             
