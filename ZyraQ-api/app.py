@@ -95,8 +95,7 @@ def GetQuestionById(question_id):
 
 
 @app.route('/questions', methods=['GET'])
-@require_token
-def GetQuestionByPosition():
+def GetQuestionByPositionPublic():
     position = request.args.get('position', type=int)
 
     if position is None:
@@ -111,7 +110,7 @@ def GetQuestionByPosition():
         return {"error": "No questions found at this position"}, 404
 
     answers = conn.execute("""
-        SELECT id, text, isCorrect
+        SELECT id, text
         FROM Answer
         WHERE question_id = ?
         ORDER BY rowid ASC
@@ -125,9 +124,7 @@ def GetQuestionByPosition():
         "text": q["text"],
         "position": q["position"],
         "image": q["image"] if q["image"] is not None else "",
-        "possibleAnswers": [
-            {"id": a["id"], "text": a["text"], "isCorrect": bool(a["isCorrect"])} for a in answers
-        ]
+        "possibleAnswers": [a["text"] for a in answers]
     }
 
     return question_data, 200
