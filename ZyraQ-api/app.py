@@ -4,6 +4,7 @@ from flask import request
 from jwt_utils import secret, build_token
 from question import Question
 from auth_token import require_token
+from rebuild_db import rebuild_database
 from answer import Answer
 import sqlite3
 from player import Player
@@ -389,50 +390,12 @@ def DeleteAllQuestions():
 @require_token
 def RebuildDatabase():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("DROP TABLE IF EXISTS Answer")
-        cursor.execute("DROP TABLE IF EXISTS Question")
-        cursor.execute("DROP TABLE IF EXISTS Player")
-        
-        cursor.execute("""
-            CREATE TABLE Question (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                text TEXT NOT NULL,
-                difficulty TEXT NOT NULL DEFAULT 'easy',
-                image BLOB,
-                position INTEGER
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE TABLE Answer (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                question_id INTEGER NOT NULL,
-                isCorrect INTEGER NOT NULL CHECK (isCorrect IN (0, 1)),
-                text TEXT NOT NULL,
-                FOREIGN KEY(question_id) REFERENCES Question(id) ON DELETE CASCADE
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE TABLE Player (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                playerName TEXT NOT NULL,
-                answers TEXT,
-                score INTEGER DEFAULT 0
-            )
-        """)
-        
-        conn.commit()
-        conn.close()
-        return "Ok", 200
-
+        success = rebuild_database()
+        if success:
+            return "Ok", 200
+        else:
+            return {"error": "Failed to rebuild database."}, 500
     except Exception as e:
-        if conn:
-            conn.close()
         return {"error": str(e)}, 500
 
 
