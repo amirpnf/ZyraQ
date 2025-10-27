@@ -27,6 +27,9 @@ function getRankClass(index) {
 </script>
 
 <template>
+  <div class="color-drops">
+    <span v-for="n in 40" :key="n"></span>
+  </div>
   <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
@@ -42,13 +45,11 @@ function getRankClass(index) {
 
         <div class="card shadow-lg border-0">
           <div class="card-header bg-white border-0 py-4">
-            <h2 class="h4 mb-0 text-dark">Tableau des Scores</h2>
+            <h2 class="h4 mb-0 text-dark text-center">Tableau des Scores</h2>
           </div>
           <div class="card-body p-0">
             <div v-if="registeredScores.length === 0" class="text-center py-5">
-              <p class="text-muted mb-0">
-                Pas encore de scores. Sois le premier !
-              </p>
+              <p class="text-muted mb-0">Pas encore de scores. Sois le premier !</p>
             </div>
             <div v-else class="table-responsive">
               <table class="table table-hover mb-0">
@@ -147,5 +148,83 @@ function getRankClass(index) {
 .btn-light:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.color-drops {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.color-drops::before,
+.color-drops::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  animation: fall 3s linear infinite;
+}
+
+.color-drops::before {
+  background: red;
+  left: 25%;
+  animation-delay: 0s;
+}
+
+.color-drops::after {
+  background: limegreen;
+  left: 60%;
+  animation-delay: 2s;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-10%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.color-drops span {
+  position: absolute;
+  top: -10%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: fall 6s linear infinite;
+}
+
+.color-drops span:nth-child(1) {
+  left: 10%;
+  background: #ff006e;
+  animation-delay: 1s;
+}
+
+.color-drops span:nth-child(2) {
+  left: 40%;
+  background: #00ff88;
+  animation-delay: 2.5s;
+}
+
+.color-drops span:nth-child(3) {
+  left: 70%;
+  background: #00b4d8;
+  animation-delay: 3.2s;
+}
+
+.color-drops span:nth-child(4) {
+  left: 85%;
+  background: #ffbe0b;
+  animation-delay: 4s;
 }
 </style>
