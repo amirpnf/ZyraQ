@@ -116,6 +116,11 @@ def GetQuestionByPositionPublic():
         ORDER BY rowid ASC
     """, (q["id"],)).fetchall()
 
+    print("Fetching question at position:", position)
+    q = conn.execute("SELECT * FROM Question WHERE position = ?", (position,)).fetchone()
+    print("Query result:", q)
+
+
     conn.close()
 
     question_data = {
