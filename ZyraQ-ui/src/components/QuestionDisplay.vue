@@ -1,34 +1,44 @@
+<!-- QuestionComponent.vue -->
 <script setup>
 const props = defineProps({
   question: Object,
-});
+})
 
-const emit = defineEmits(['answer-clicked']);
+const emit = defineEmits(['answer-clicked'])
 
 function selectAnswer(answerIndex) {
-  emit('answer-clicked', answerIndex);
+  emit('answer-clicked', answerIndex)
 }
 </script>
 
 <template>
   <div class="card shadow-lg border-0" v-if="question">
     <div class="card-body p-5">
-      <h3 class="question-title mb-4">{{ question.title }}</h3>
-
+      <!-- Centered Question Position -->
+      <div class="question-header mb-3 text-center">
+        <span class="badge bg-primary fs-6">Question {{ question.position }}</span>
+      </div>
+      
+      <!-- Centered Question Title -->
+      <h2 class="question-title mb-4 text-center">{{ question.title }}</h2>
+      
+      <!-- Centered Question Text -->
+      <h3 class="question-text mb-4 text-center">{{ question.text }}</h3>
+      
       <div v-if="question.image" class="text-center mb-4">
-        <img
-          :src="question.image"
-          alt="Question image"
-          class="img-fluid rounded shadow-sm"
-          style="max-height: 300px"
+        <img 
+          :src="question.image" 
+          alt="Question image" 
+          class="img-fluid rounded shadow-sm" 
+          style="max-height: 300px" 
         />
       </div>
-
+      
       <div class="answers-grid">
-        <button
-          v-for="(answer, index) in question.possibleAnswers"
-          :key="index"
-          @click="selectAnswer(index + 1)"
+        <button 
+          v-for="(answer, index) in question.possibleAnswers" 
+          :key="index" 
+          @click="selectAnswer(index + 1)" 
           class="answer-btn"
         >
           <span class="answer-letter">{{ String.fromCharCode(65 + index) }}</span>
@@ -37,9 +47,9 @@ function selectAnswer(answerIndex) {
       </div>
     </div>
   </div>
-
-  <div v-else class="alert alert-warning border-0 shadow-sm">
-    <strong>Attention:</strong> Pas de question
+  
+  <div v-else class="alert alert-warning border-0 shadow-sm text-center">
+    <strong>Attention:</strong> Pas de question disponible
   </div>
 </template>
 
@@ -48,16 +58,30 @@ function selectAnswer(answerIndex) {
   border-radius: 15px;
 }
 
+.question-header {
+  margin-bottom: 1.5rem;
+}
+
 .question-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  font-weight: 700;
   color: #2d3748;
   line-height: 1.4;
+  margin-bottom: 1.5rem;
+}
+
+.question-text {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #4a5568;
+  line-height: 1.4;
+  margin-bottom: 2rem;
 }
 
 .answers-grid {
   display: grid;
   gap: 1rem;
+  margin-top: 2rem;
 }
 
 .answer-btn {
@@ -99,5 +123,10 @@ function selectAnswer(answerIndex) {
 .answer-text {
   flex: 1;
   font-weight: 500;
+}
+
+/* Ensure text-center class works */
+.text-center {
+  text-align: center;
 }
 </style>
