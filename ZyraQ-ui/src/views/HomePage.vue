@@ -30,35 +30,36 @@ function getRankClass(index) {
   <div class="color-drops">
     <span v-for="n in 40" :key="n"></span>
   </div>
-  <div class="container mt-5">
+  <div class="container mt-5 mb-5 pb-5">
     <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8">
-        <div class="hero-section text-center mb-5">
-          <h1 class="display-3 fw-bold text-white mb-3">ZyraQ Quiz</h1>
-          <p class="lead text-white-50 mb-4">
-            Test tes connaissances avec {{ totalQuestions }} questions
-          </p>
-          <router-link to="/new-quiz" class="btn btn-light btn-lg px-5 py-3 shadow">
-            Démarrer le Quiz
-          </router-link>
-        </div>
-
-        <div class="card shadow-lg border-0">
-          <div class="card-header bg-white border-0 py-4">
-            <h2 class="h4 mb-0 text-dark text-center">Tableau des Scores</h2>
+      <div class="contner col-md-10 col-lg-8">
+        <div class="contner-inner">
+          <div class="hero-section text-center mb-5">
+            <h1 class="display-3 fw-bold text-white mb-3">ZyraQ Quiz</h1>
+            <p class="lead text-white-50 mb-4">
+              Test tes connaissances avec {{ totalQuestions }} questions
+            </p>
+            <router-link to="/new-quiz" class="btn btn-gradient btn-lg px-5 py-3 shadow">
+              Démarrer le Quiz
+            </router-link>
           </div>
-          <div class="card-body p-0">
+
+          <!-- Tableau des scores intégré -->
+          <div class="scores-section">
+            <div class="scores-header text-center mb-4">
+              <h2 class="h4 mb-0 text-white">Tableau des Scores</h2>
+            </div>
             <div v-if="registeredScores.length === 0" class="text-center py-5">
-              <p class="text-muted mb-0">Pas encore de scores. Sois le premier !</p>
+              <p class="text-white-50 mb-0">Pas encore de scores. Sois le premier !</p>
             </div>
             <div v-else class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
+              <table class="table table-hover mb-0 table-custom">
+                <thead class="table-header-custom">
                   <tr>
-                    <th class="px-4 py-3">Rang</th>
-                    <th class="px-4 py-3">Joueur</th>
-                    <th class="px-4 py-3 text-end">Score</th>
-                    <th class="px-4 py-3 text-end">Date</th>
+                    <th class="px-4 py-3 text-white">Rang</th>
+                    <th class="px-4 py-3 text-white">Joueur</th>
+                    <th class="px-4 py-3 text-end text-white">Score</th>
+                    <th class="px-4 py-3 text-end text-white">Date</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -72,13 +73,13 @@ function getRankClass(index) {
                         {{ index + 1 }}
                       </span>
                     </td>
-                    <td class="px-4 py-3 fw-semibold">{{ scoreEntry.playerName }}</td>
+                    <td class="px-4 py-3 fw-semibold text-white">{{ scoreEntry.playerName }}</td>
                     <td class="px-4 py-3 text-end">
-                      <span class="score-value">
+                      <span class="score-value text-white">
                         {{ scoreEntry.score }} / {{ totalQuestions }}
                       </span>
                     </td>
-                    <td class="px-4 py-3 text-end text-muted small">
+                    <td class="px-4 py-3 text-end text-white-50 small">
                       {{ new Date(scoreEntry.date).toLocaleDateString('fr-FR') }}
                     </td>
                   </tr>
@@ -96,20 +97,54 @@ function getRankClass(index) {
 .hero-section {
   padding: 3rem 0;
 }
+.contner {
+  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
+  padding: 9px;
+  border-radius: 39px;
+  z-index: 1;
+}
+
+.contner-inner {
+  background-color: #090043;
+  padding: 2rem;
+  border-radius: 30px;
+  width: 100%;
+  height: 100%;
+}
+
+.scores-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
 
 .card {
   border-radius: 15px;
   overflow: hidden;
 }
 
+.card-header {
+  background-color: #090043 !important;
+}
+
+.table-custom {
+  background-color: #090043;
+  color: white;
+}
+
+.table-header-custom {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .score-row {
   transition: all 0.2s;
   border-left: 3px solid transparent;
+  background-color: #090043;
 }
 
 .score-row:hover {
-  background-color: #f8f9fa;
-  border-left-color: #667eea;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-left-color: #f0bd1e;
 }
 
 .rank-badge {
@@ -142,12 +177,27 @@ function getRankClass(index) {
 
 .score-value {
   font-weight: 600;
-  color: #667eea;
+  color: #f0bd1e; /* couleur jaune du dégradé */
 }
 
 .btn-light:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
+  border: none;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(90deg, #cc13b5, #f0bd1e);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(204, 19, 181, 0.3) !important;
+  color: white;
 }
 
 .color-drops {
