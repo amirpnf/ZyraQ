@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import quizApiService from '@/services/QuizApiService';
 import adminAuthService from '@/services/AdminAuthService';
@@ -8,6 +8,12 @@ const router = useRouter();
 const password = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
+
+onMounted(() => {
+  if (adminAuthService.isAdminLoggedIn()) {
+    router.push('/admin/questions');
+  }
+});
 
 async function handleLogin() {
   if (!password.value.trim()) {
@@ -20,7 +26,8 @@ async function handleLogin() {
 
   try {
     const response = await quizApiService.login(password.value);
-    if (response && response.data && response.data.token) {
+
+    if (response.status === 200 && response.data.token) {
       adminAuthService.saveToken(response.data.token);
       router.push('/admin/questions');
     } else {
@@ -48,9 +55,7 @@ async function handleLogin() {
             </div>
             <div class="admin-body p-5">
               <div class="text-center mb-4">
-                <p class="text-white-50">
-                  Connecte-toi pour gérer les questions
-                </p>
+                <p class="text-white-50">Connecte-toi pour gérer les questions</p>
               </div>
 
               <form @submit.prevent="handleLogin">
@@ -74,11 +79,7 @@ async function handleLogin() {
                 </div>
 
                 <div class="d-grid gap-3">
-                  <button
-                    type="submit"
-                    class="btn btn-gradient btn-lg"
-                    :disabled="isLoading"
-                  >
+                  <button type="submit" class="btn btn-gradient btn-lg" :disabled="isLoading">
                     <span v-if="isLoading">
                       <span
                         class="spinner-border spinner-border-sm me-2"
@@ -89,9 +90,7 @@ async function handleLogin() {
                     </span>
                     <span v-else> Se connecter </span>
                   </button>
-                  <router-link to="/" class="btn btn-outline-light">
-                    Retour
-                  </router-link>
+                  <router-link to="/" class="btn btn-outline-light"> Retour </router-link>
                 </div>
               </form>
             </div>

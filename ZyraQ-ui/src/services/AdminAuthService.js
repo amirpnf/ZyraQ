@@ -1,14 +1,23 @@
+const TOKEN_KEY = 'adminToken';
+
 export default {
   saveToken(token) {
-    window.localStorage.setItem('adminToken', token);
+    localStorage.setItem(TOKEN_KEY, token);
   },
+
   getToken() {
-    return window.localStorage.getItem('adminToken');
+    return localStorage.getItem(TOKEN_KEY);
   },
+
   clearToken() {
-    window.localStorage.removeItem('adminToken');
+    localStorage.removeItem(TOKEN_KEY);
   },
-  isAuthenticated() {
-    return this.getToken() !== null;
+
+  isAdminLoggedIn() {
+    return !!this.getToken();
+  },
+
+  logout() {
+    this.clearToken();
   },
 };
