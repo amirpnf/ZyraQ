@@ -104,22 +104,16 @@ def GetQuestionByPositionPublic():
     conn = get_db_connection()
 
     q = conn.execute("SELECT * FROM Question WHERE position = ?", (position,)).fetchone()
-
     if not q:
         conn.close()
         return {"error": "No questions found at this position"}, 404
 
     answers = conn.execute("""
-        SELECT id, text
+        SELECT id, text, isCorrect
         FROM Answer
         WHERE question_id = ?
         ORDER BY rowid ASC
     """, (q["id"],)).fetchall()
-
-    print("Fetching question at position:", position)
-    q = conn.execute("SELECT * FROM Question WHERE position = ?", (position,)).fetchone()
-    print("Query result:", q)
-
 
     conn.close()
 
@@ -129,10 +123,13 @@ def GetQuestionByPositionPublic():
         "text": q["text"],
         "position": q["position"],
         "image": q["image"] if q["image"] is not None else "",
-        "possibleAnswers": [a["text"] for a in answers]
+        "possibleAnswers": [
+            {"id": a["id"], "text": a["text"], "isCorrect": bool(a["isCorrect"])} for a in answers
+        ]
     }
 
     return question_data, 200
+
 
 @app.route('/questions', methods=['POST'])
 @require_token

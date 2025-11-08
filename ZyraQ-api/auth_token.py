@@ -9,7 +9,6 @@ def require_token(func):
         if not auth_header:
             return {"error": "Missing Authorization header"}, 401
 
-        # Expected format: "Bearer <token>"
         parts = auth_header.split(" ")
         if len(parts) != 2 or parts[0].lower() != "bearer":
             return {"error": "Invalid Authorization header format"}, 401

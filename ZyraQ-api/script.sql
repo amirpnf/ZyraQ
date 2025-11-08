@@ -10,7 +10,6 @@ CREATE TABLE Question (
 CREATE TABLE Answer (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     question_id INTEGER NOT NULL,
-    -- questionPos INTEGER,  -- optional if needed
     isCorrect INTEGER NOT NULL CHECK (isCorrect IN (0, 1)),
     text TEXT NOT NULL,
     FOREIGN KEY(question_id) REFERENCES Question(id) ON DELETE CASCADE

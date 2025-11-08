@@ -1,0 +1,453 @@
+{
+	"info": {
+		"_postman_id": "0985e187-f2d5-4482-bb22-d09d4bcabd60",
+		"name": "Funny Quiz",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48434296",
+		"_collection_link": "https://amirhpnfar-7057679.postman.co/workspace/Amir's-Workspace~da9e1a7f-2f81-407a-84ea-3607ded05c53/collection/48434296-0985e187-f2d5-4482-bb22-d09d4bcabd60?action=share&source=collection_link&creator=48434296"
+	},
+	"item": [
+		{
+			"name": "Login good password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"password\": \"{{pwd}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete all questions",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Request respond ok\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/questions/all",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions",
+						"all"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 1",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Normalisation\",\n  \"text\": \"Quel est l’objectif principal de la normalisation d’une base de données relationnelle ?\",\n  \"position\": 26,\n  \"image\": \"\",\n  \"difficulty\": \"easy\",\n  \"possibleAnswers\": [\n    { \"text\": \"Éviter les redondances et les anomalies\", \"isCorrect\": 1 },\n    { \"text\": \"Rendre la base plus lente\", \"isCorrect\": 0 },\n    { \"text\": \"Supprimer toutes les données\", \"isCorrect\": 0 },\n    { \"text\": \"Multiplier les tables inutilement\", \"isCorrect\": 0 }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Fonctions\",\n  \"text\": \"Quelle est la dérivée de f(x) = x² + 3x + 5 ?\",\n  \"position\": 27,\n  \"image\": \"\",\n  \"difficulty\": \"medium\",\n  \"possibleAnswers\": [\n    { \"text\": \"2x + 3\", \"isCorrect\": 1 },\n    { \"text\": \"x² + 3\", \"isCorrect\": 0 },\n    { \"text\": \"2x + 5\", \"isCorrect\": 0 },\n    { \"text\": \"3x² + 5\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 3",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Réseaux de neurones\",\n  \"text\": \"Quel rôle joue la fonction d’activation dans un réseau de neurones ?\",\n  \"position\": 28,\n  \"image\": \"\",\n  \"difficulty\": \"hard\",\n  \"possibleAnswers\": [\n    { \"text\": \"Introduire de la non-linéarité pour capturer des relations complexes\", \"isCorrect\": 1 },\n    { \"text\": \"Augmenter la taille des poids\", \"isCorrect\": 0 },\n    { \"text\": \"Réduire le nombre de couches\", \"isCorrect\": 0 },\n    { \"text\": \"Normaliser les entrées\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 4",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Mot de passe\",\n  \"text\": \"Pourquoi est-il recommandé d’utiliser un mot de passe long et unique pour chaque site ?\",\n  \"position\": 29,\n  \"image\": \"\",\n  \"difficulty\": \"medium\",\n  \"possibleAnswers\": [\n    { \"text\": \"Pour réduire le risque de piratage en cas de fuite de données\", \"isCorrect\": 1 },\n    { \"text\": \"Pour rendre le mot de passe facile à retenir\", \"isCorrect\": 0 },\n    { \"text\": \"Pour simplifier la connexion automatique\", \"isCorrect\": 0 },\n    { \"text\": \"Pour que le navigateur l’oublie\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 5",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Gravité\",\n  \"text\": \"Quelle est la force qui maintient les planètes en orbite autour du Soleil ?\",\n  \"position\": 32,\n  \"image\": \"\",\n  \"difficulty\": \"medium\",\n  \"possibleAnswers\": [\n    { \"text\": \"La gravité\", \"isCorrect\": 1 },\n    { \"text\": \"Le magnétisme\", \"isCorrect\": 0 },\n    { \"text\": \"La force centrifuge\", \"isCorrect\": 0 },\n    { \"text\": \"La pression atmosphérique\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 6",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Probabilités\",\n  \"text\": \"Si vous lancez deux dés équilibrés, quelle est la probabilité d’obtenir un double six ?\",\n  \"position\": 34,\n  \"image\": \"\",\n  \"difficulty\": \"medium\",\n  \"possibleAnswers\": [\n    { \"text\": \"1/36\", \"isCorrect\": 1 },\n    { \"text\": \"1/12\", \"isCorrect\": 0 },\n    { \"text\": \"1/6\", \"isCorrect\": 0 },\n    { \"text\": \"1/18\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 7",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Validation croisée\",\n  \"text\": \"Quel est le but principal de la validation croisée (cross-validation) en apprentissage automatique ?\",\n  \"position\": 30,\n  \"image\": \"\",\n  \"difficulty\": \"hard\",\n  \"possibleAnswers\": [\n    { \"text\": \"Évaluer la performance du modèle de manière fiable\", \"isCorrect\": 1 },\n    { \"text\": \"Augmenter la taille des données\", \"isCorrect\": 0 },\n    { \"text\": \"Supprimer les valeurs aberrantes\", \"isCorrect\": 0 },\n    { \"text\": \"Créer des nouvelles variables\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 8",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"IP\",\n  \"text\": \"Que signifie l’acronyme IP dans le contexte des réseaux informatiques ?\",\n  \"position\": 31,\n  \"image\": \"\",\n  \"difficulty\": \"easy\",\n  \"possibleAnswers\": [\n    { \"text\": \"Internet Protocol\", \"isCorrect\": 1 },\n    { \"text\": \"Internal Process\", \"isCorrect\": 0 },\n    { \"text\": \"Integrated Programming\", \"isCorrect\": 0 },\n    { \"text\": \"Intelligent Packet\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 9",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Complexité algorithmique\",\n  \"text\": \"Quel est le pire cas de complexité pour un tri par insertion sur une liste de n éléments ?\",\n  \"position\": 21,\n  \"image\": \"\",\n  \"difficulty\": \"hard\",\n  \"possibleAnswers\": [\n    { \"text\": \"O(n²)\", \"isCorrect\": 1 },\n    { \"text\": \"O(n log n)\", \"isCorrect\": 0 },\n    { \"text\": \"O(n)\", \"isCorrect\": 0 },\n    { \"text\": \"O(log n)\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Question 10",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Paradoxe mathématique\",\n  \"text\": \"Si deux droites parallèles sont prolongées à l’infini, vont-elles se croiser ?\",\n  \"position\": 22,\n  \"image\": \"\",\n  \"difficulty\": \"hard\",\n  \"possibleAnswers\": [\n    { \"text\": \"Non, par définition des droites parallèles\", \"isCorrect\": 1 },\n    { \"text\": \"Oui, dans un espace euclidien\", \"isCorrect\": 0 },\n    { \"text\": \"Oui, dans un espace non-euclidien\", \"isCorrect\": 0 },\n    { \"text\": \"Impossible à dire\", \"isCorrect\": 0 }\n  ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/questions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"questions"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
