@@ -10,6 +10,7 @@ const token = ref('');
 const isLoading = ref(false);
 const isEditMode = ref(false);
 const questionId = ref(null);
+const imagePreview = ref('');
 
 const formData = ref({
   title: '',
@@ -82,8 +83,29 @@ function removeAnswer(index) {
   }
 }
 
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Seulement les images sont autorisées');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    formData.value.image = e.target.result;
+    imagePreview.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  formData.value.image = '';
+  imagePreview.value = '';
+}
+
 async function handleSubmit() {
-  // Validation
   if (!formData.value.title.trim()) {
     alert('Le titre est obligatoire');
     return;
@@ -137,182 +159,197 @@ function cancel() {
 </script>
 
 <template>
-  <div>
-    <div class="color-drops">
-      <span v-for="n in 40" :key="n"></span>
-    </div>
-    <div class="container mt-4 mb-5 pb-5">
-      <div class="row justify-content-center">
-        <div class="col-md-10">
-          <div class="form-container">
-            <div class="form-container-inner">
-              <div class="form-header py-4">
-                <h2 class="h4 mb-0 text-white text-center">
-                  {{ isEditMode ? 'Modifier la question' : 'Créer une question' }}
-                </h2>
+  <div class="page-wrapper">
+    <div class="container-fluid px-4 py-4">
+      <div class="form-top-bar mb-4">
+        <div class="top-bar-inner">
+          <h1 class="form-main-title">
+            {{ isEditMode ? 'Modifier la question' : 'Créer une question' }}
+          </h1>
+          <div class="top-actions">
+            <button
+              type="button"
+              @click="cancel"
+              class="btn-cancel"
+              :disabled="isLoading"
+            >
+              Annuler
+            </button>
+            <button
+              @click="handleSubmit"
+              class="btn-save"
+              :disabled="isLoading"
+            >
+              <span v-if="isLoading">
+                <span
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                ></span>
+                Sauvegarde...
+              </span>
+              <span v-else>
+                {{ isEditMode ? 'Enregistrer' : 'Créer la question' }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-layout">
+        <div class="form-left">
+          <div class="info-card contner">
+            <div class="contner-inner">
+              <h3 class="section-title text-white mb-4">Informations</h3>
+              
+              <div class="mb-4">
+                <label for="title" class="input-label text-white">
+                  Titre de la question
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  class="custom-input"
+                  v-model="formData.title"
+                  placeholder="Ex: Quelle est la capitale de la France ?"
+                  required
+                />
               </div>
-              <div class="form-body p-4">
-                <form @submit.prevent="handleSubmit">
-                  <div class="row">
-                    <div class="col-md-8 mb-3">
-                      <label for="title" class="form-label fw-semibold text-white">
-                        Titre
-                      </label>
-                      <input
-                        id="title"
-                        type="text"
-                        class="form-control custom-input"
-                        v-model="formData.title"
-                        placeholder="Ex: Quelle est la capitale de la France ?"
-                        required
-                      />
-                    </div>
-                    <div class="col-md-2 mb-3">
-                      <label for="position" class="form-label fw-semibold text-white">
-                        Position
-                      </label>
-                      <input
-                        id="position"
-                        type="number"
-                        class="form-control custom-input"
-                        v-model.number="formData.position"
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div class="col-md-2 mb-3">
-                      <label for="difficulty" class="form-label fw-semibold text-white">
-                        Difficulté
-                      </label>
-                      <select
-                        id="difficulty"
-                        class="form-select custom-select"
-                        v-model="formData.difficulty"
-                      >
-                        <option value="easy">Facile</option>
-                        <option value="medium">Moyen</option>
-                        <option value="hard">Difficile</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  <div class="mb-3">
-                    <label for="text" class="form-label fw-semibold text-white">
-                      Description
-                    </label>
-                    <textarea
-                      id="text"
-                      class="form-control custom-input"
-                      v-model="formData.text"
-                      rows="3"
-                      placeholder="Description additionnelle (optionnel)"
-                    ></textarea>
-                  </div>
+              <div class="mb-4">
+                <label for="text" class="input-label text-white">
+                  Description
+                </label>
+                <textarea
+                  id="text"
+                  class="custom-input"
+                  v-model="formData.text"
+                  rows="4"
+                  placeholder="Description additionnelle (optionnel)"
+                ></textarea>
+              </div>
 
-                  <div class="mb-4">
-                    <label for="image" class="form-label fw-semibold text-white">
-                      Image (Base64 ou URL)
-                    </label>
-                    <textarea
-                      id="image"
-                      class="form-control custom-input"
-                      v-model="formData.image"
-                      rows="2"
-                      placeholder="data:image/png;base64,... ou URL de l'image"
-                    ></textarea>
-                    <small class="text-white-50">
-                      Laisse vide si pas d'image
-                    </small>
-                  </div>
+              <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                  <label for="position" class="input-label text-white">
+                    Position
+                  </label>
+                  <input
+                    id="position"
+                    type="number"
+                    class="custom-input"
+                    v-model.number="formData.position"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div class="col-md-8">
+                  <label for="difficulty" class="input-label text-white">
+                    Difficulté
+                  </label>
+                  <select
+                    id="difficulty"
+                    class="custom-select"
+                    v-model="formData.difficulty"
+                  >
+                    <option value="easy">Facile</option>
+                    <option value="medium">Moyen</option>
+                    <option value="hard">Difficile</option>
+                  </select>
+                </div>
+              </div>
 
-                  <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <h5 class="mb-0 text-white">Réponses possibles</h5>
+              <div class="mb-0">
+                <label class="input-label text-white mb-3">
+                  Image
+                </label>
+                
+                <div v-if="imagePreview" class="image-preview-container mb-3">
+                  <img :src="imagePreview" alt="Aperçu" class="image-preview" />
+                  <button
+                    type="button"
+                    @click="removeImage"
+                    class="btn-remove-image"
+                  >
+                    ✕ Supprimer
+                  </button>
+                </div>
+
+                <label for="imageUpload" class="btn-upload-image">
+                  <input
+                    id="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  @change="handleImageUpload"
+                  style="display: none;"
+                />
+                  Choisir une image
+                </label>
+                
+                <small class="text-white-50 d-block mt-2">
+                  Formats acceptés : JPG, PNG, GIF
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-right">
+          <div class="answers-card contner">
+            <div class="contner-inner">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="section-title text-white mb-0">Réponses</h3>
+                <button
+                  type="button"
+                  @click="addAnswer"
+                  class="btn-add-answer"
+                >
+                  + Ajouter
+                </button>
+              </div>
+
+              <div class="answers-list">
+                <div
+                  v-for="(answer, index) in formData.possibleAnswers"
+                  :key="index"
+                  class="answer-item"
+                >
+                  <div class="answer-header">
+                    <div class="answer-letter">
+                      {{ String.fromCharCode(65 + index) }}
+                    </div>
+                    <div class="answer-controls">
+                      <label class="checkbox-wrapper">
+                        <input
+                          type="checkbox"
+                          class="custom-checkbox"
+                          v-model="answer.isCorrect"
+                        />
+                        <span class="checkbox-label text-white">Correcte</span>
+                      </label>
                       <button
                         type="button"
-                        @click="addAnswer"
-                        class="btn btn-sm btn-outline-light"
+                        @click="removeAnswer(index)"
+                        class="btn-remove"
+                        :disabled="formData.possibleAnswers.length <= 2"
+                        title="Supprimer"
                       >
-                        Ajouter une réponse
+                        ✕
                       </button>
                     </div>
-
-                    <div
-                      v-for="(answer, index) in formData.possibleAnswers"
-                      :key="index"
-                      class="answer-card mb-2"
-                    >
-                      <div class="row align-items-center g-3">
-                        <div class="col-auto">
-                          <span class="answer-letter-badge">
-                            {{ String.fromCharCode(65 + index) }}
-                          </span>
-                        </div>
-                        <div class="col">
-                          <input
-                            type="text"
-                            class="form-control custom-input"
-                            v-model="answer.text"
-                            :placeholder="`Réponse ${String.fromCharCode(65 + index)}`"
-                          />
-                        </div>
-                        <div class="col-auto">
-                          <div class="form-check">
-                            <input
-                              type="checkbox"
-                              class="form-check-input custom-checkbox"
-                              :id="`correct-${index}`"
-                              v-model="answer.isCorrect"
-                            />
-                            <label
-                              class="form-check-label text-white"
-                              :for="`correct-${index}`"
-                            >
-                              Correcte
-                            </label>
-                          </div>
-                        </div>
-                        <div class="col-auto">
-                          <button
-                            type="button"
-                            @click="removeAnswer(index)"
-                            class="btn btn-sm btn-outline-danger"
-                            :disabled="formData.possibleAnswers.length <= 2"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </div>
-                    </div>
                   </div>
+                  <input
+                    type="text"
+                    class="answer-input"
+                    v-model="answer.text"
+                    :placeholder="`Réponse ${String.fromCharCode(65 + index)}`"
+                  />
+                </div>
+              </div>
 
-                  <div class="d-flex gap-2">
-                    <button
-                      type="submit"
-                      class="btn btn-gradient px-4"
-                      :disabled="isLoading"
-                    >
-                      <span v-if="isLoading">
-                        <span
-                          class="spinner-border spinner-border-sm me-2"
-                          role="status"
-                        ></span>
-                        Sauvegarde...
-                      </span>
-                      <span v-else>
-                        {{ isEditMode ? 'Modifier' : 'Créer' }}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      @click="cancel"
-                      class="btn btn-outline-light px-4"
-                      :disabled="isLoading"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </form>
+              <div class="answers-hint">
+                <small class="text-white-50">
+                  Minimum 2 réponses. Au moins 1 doit être correcte.
+                </small>
               </div>
             </div>
           </div>
@@ -323,137 +360,234 @@ function cancel() {
 </template>
 
 <style scoped>
-.color-drops {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  z-index: -1;
-  opacity: 0.4;
+.page-wrapper {
+  min-height: 100vh;
+  position: relative;
+  background: #090043;
 }
 
-.color-drops span {
-  position: absolute;
-  top: -100%;
-  width: 8px;
-  height: 200px;
-  background: linear-gradient(45deg, #f0bd1e, #cc13b5);
-  border-radius: 50px;
-  animation: drop linear infinite;
-}
-
-.color-drops span:nth-child(1) { left: 2%; animation-duration: 8s; animation-delay: 0s; }
-.color-drops span:nth-child(2) { left: 5%; animation-duration: 12s; animation-delay: 1s; }
-.color-drops span:nth-child(3) { left: 8%; animation-duration: 10s; animation-delay: 0.5s; }
-.color-drops span:nth-child(4) { left: 12%; animation-duration: 14s; animation-delay: 2s; }
-.color-drops span:nth-child(5) { left: 15%; animation-duration: 9s; animation-delay: 0.8s; }
-.color-drops span:nth-child(6) { left: 18%; animation-duration: 11s; animation-delay: 1.5s; }
-.color-drops span:nth-child(7) { left: 22%; animation-duration: 13s; animation-delay: 0.3s; }
-.color-drops span:nth-child(8) { left: 25%; animation-duration: 7s; animation-delay: 1.8s; }
-.color-drops span:nth-child(9) { left: 28%; animation-duration: 15s; animation-delay: 0.7s; }
-.color-drops span:nth-child(10) { left: 32%; animation-duration: 8s; animation-delay: 2.2s; }
-.color-drops span:nth-child(11) { left: 35%; animation-duration: 12s; animation-delay: 1.2s; }
-.color-drops span:nth-child(12) { left: 38%; animation-duration: 10s; animation-delay: 0.9s; }
-.color-drops span:nth-child(13) { left: 42%; animation-duration: 14s; animation-delay: 1.7s; }
-.color-drops span:nth-child(14) { left: 45%; animation-duration: 9s; animation-delay: 0.4s; }
-.color-drops span:nth-child(15) { left: 48%; animation-duration: 11s; animation-delay: 2.1s; }
-.color-drops span:nth-child(16) { left: 52%; animation-duration: 13s; animation-delay: 0.6s; }
-.color-drops span:nth-child(17) { left: 55%; animation-duration: 7s; animation-delay: 1.9s; }
-.color-drops span:nth-child(18) { left: 58%; animation-duration: 15s; animation-delay: 1.1s; }
-.color-drops span:nth-child(19) { left: 62%; animation-duration: 8s; animation-delay: 0.2s; }
-.color-drops span:nth-child(20) { left: 65%; animation-duration: 12s; animation-delay: 1.6s; }
-.color-drops span:nth-child(21) { left: 68%; animation-duration: 10s; animation-delay: 0.1s; }
-.color-drops span:nth-child(22) { left: 72%; animation-duration: 14s; animation-delay: 2.3s; }
-.color-drops span:nth-child(23) { left: 75%; animation-duration: 9s; animation-delay: 1.3s; }
-.color-drops span:nth-child(24) { left: 78%; animation-duration: 11s; animation-delay: 0.5s; }
-.color-drops span:nth-child(25) { left: 82%; animation-duration: 13s; animation-delay: 2s; }
-.color-drops span:nth-child(26) { left: 85%; animation-duration: 7s; animation-delay: 0.8s; }
-.color-drops span:nth-child(27) { left: 88%; animation-duration: 15s; animation-delay: 1.4s; }
-.color-drops span:nth-child(28) { left: 92%; animation-duration: 8s; animation-delay: 0.7s; }
-.color-drops span:nth-child(29) { left: 95%; animation-duration: 12s; animation-delay: 2.4s; }
-.color-drops span:nth-child(30) { left: 98%; animation-duration: 10s; animation-delay: 1s; }
-.color-drops span:nth-child(31) { left: 3%; animation-duration: 14s; animation-delay: 1.8s; }
-.color-drops span:nth-child(32) { left: 7%; animation-duration: 9s; animation-delay: 0.3s; }
-.color-drops span:nth-child(33) { left: 11%; animation-duration: 11s; animation-delay: 2.1s; }
-.color-drops span:nth-child(34) { left: 14%; animation-duration: 13s; animation-delay: 0.6s; }
-.color-drops span:nth-child(35) { left: 17%; animation-duration: 7s; animation-delay: 1.7s; }
-.color-drops span:nth-child(36) { left: 21%; animation-duration: 15s; animation-delay: 0.9s; }
-.color-drops span:nth-child(37) { left: 24%; animation-duration: 8s; animation-delay: 2.2s; }
-.color-drops span:nth-child(38) { left: 27%; animation-duration: 12s; animation-delay: 1.1s; }
-.color-drops span:nth-child(39) { left: 31%; animation-duration: 10s; animation-delay: 0.4s; }
-.color-drops span:nth-child(40) { left: 34%; animation-duration: 14s; animation-delay: 1.9s; }
-
-@keyframes drop {
-  to {
-    transform: translateY(calc(100vh + 200px));
-  }
-}
-
-.form-container {
-  padding: 4px;
+.contner {
   background: linear-gradient(135deg, #f0bd1e, #cc13b5);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 3px;
+  border-radius: 20px;
+  position: relative;
+  z-index: 1;
 }
 
-.form-container-inner {
-  background: #090043;
+.contner-inner {
+  background-color: #090043;
+  padding: 2rem;
+  border-radius: 17px;
+  width: 100%;
+  height: 100%;
+}
+
+.form-top-bar {
+  position: relative;
+  z-index: 1;
+}
+
+.top-bar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(240, 189, 30, 0.15), rgba(204, 19, 181, 0.15));
+  backdrop-filter: blur(10px);
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-main-title {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.top-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
   border-radius: 12px;
-  overflow: hidden;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.form-header {
-  background: linear-gradient(135deg, rgba(240, 189, 30, 0.1), rgba(204, 19, 181, 0.1));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.btn-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: translateY(-2px);
 }
 
-.form-body {
-  background: #090043;
+.btn-save {
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(240, 189, 30, 0.4);
+}
+
+.btn-save:disabled,
+.btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.input-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
 }
 
 .custom-input {
-  background: rgba(255, 255, 255, 0.1);
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
   color: white;
-  padding: 12px 16px;
-  font-size: 16px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
   transition: all 0.3s ease;
 }
 
 .custom-input:focus {
-  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
   border-color: #f0bd1e;
-  box-shadow: 0 0 0 0.25rem rgba(240, 189, 30, 0.25);
-  color: white;
+  box-shadow: 0 0 0 4px rgba(240, 189, 30, 0.15);
 }
 
 .custom-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .custom-select {
-  background: rgba(255, 255, 255, 0.1);
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
   color: white;
-  padding: 12px 16px;
-  font-size: 16px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .custom-select:focus {
-  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
   border-color: #f0bd1e;
-  box-shadow: 0 0 0 0.25rem rgba(240, 189, 30, 0.25);
-  color: white;
+  box-shadow: 0 0 0 4px rgba(240, 189, 30, 0.15);
 }
 
 .custom-select option {
   background: #090043;
   color: white;
+}
+
+.btn-add-answer {
+  background: rgba(240, 189, 30, 0.15);
+  border: 2px solid rgba(240, 189, 30, 0.4);
+  color: #f0bd1e;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-add-answer:hover {
+  background: rgba(240, 189, 30, 0.25);
+  border-color: #f0bd1e;
+  transform: translateY(-2px);
+}
+
+.answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.answer-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.answer-item:hover {
+  border-color: rgba(240, 189, 30, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.answer-letter {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: white;
+}
+
+.answer-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
 
 .custom-checkbox {
@@ -462,6 +596,10 @@ function cancel() {
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
+  cursor: pointer;
+  appearance: none;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
 .custom-checkbox:checked {
@@ -469,104 +607,162 @@ function cancel() {
   border-color: #f0bd1e;
 }
 
-.answer-card {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-}
-
-.answer-card:hover {
-  border-color: rgba(240, 189, 30, 0.5);
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.answer-letter-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+.custom-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: white;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: bold;
+  font-size: 14px;
 }
 
-.btn-gradient {
-  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
-  border: none;
-  color: white;
+.checkbox-label {
   font-weight: 600;
-  padding: 12px 24px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  font-size: 0.9rem;
 }
 
-.btn-gradient:hover {
+.btn-upload-image {
+  display: inline-block;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.btn-upload-image:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(240, 189, 30, 0.4);
-  color: white;
 }
 
-.btn-outline-light {
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  color: rgba(255, 255, 255, 0.8);
-  background: #090043;
-  transition: all 0.3s ease;
+.image-preview-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
 }
 
-.btn-outline-light:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  transform: translateY(-1px);
+.image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  border: 3px solid rgba(240, 189, 30, 0.5);
+  display: block;
 }
 
-.btn-outline-danger {
+.btn-remove-image {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(220, 53, 69, 0.9);
   border: 2px solid #dc3545;
-  color: #dc3545;
-  background: #090043;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.btn-outline-danger:hover {
+.btn-remove-image:hover {
   background: #dc3545;
-  color: white;
-  transform: translateY(-1px);
+  transform: scale(1.05);
 }
 
-.btn-outline-danger:disabled {
-  opacity: 0.5;
+.btn-remove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(220, 53, 69, 0.1);
+  border: 2px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: white;
+  transform: scale(1.1);
+}
+
+.btn-remove:disabled {
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
-.btn-outline-danger:disabled:hover {
-  transform: none;
-  background: #090043;
-  color: #dc3545;
+.answer-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.answer-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #f0bd1e;
+}
+
+.answer-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.answers-hint {
+  padding: 0.75rem;
+  background: rgba(240, 189, 30, 0.1);
+  border-radius: 10px;
+  border-left: 3px solid #f0bd1e;
+}
+
+.spinner-border {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .form-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .form-container {
-    padding: 2px;
+  .form-main-title {
+    font-size: 1.5rem;
   }
   
-  .custom-input, .custom-select {
-    font-size: 14px;
-    padding: 10px 14px;
+  .top-bar-inner {
+    flex-direction: column;
+    gap: 1rem;
   }
   
-  .answer-card {
-    padding: 0.75rem;
+  .top-actions {
+    width: 100%;
+    flex-direction: column;
   }
   
-  .answer-letter-badge {
-    width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
+  .btn-cancel,
+  .btn-save {
+    width: 100%;
+  }
+  
+  .contner-inner {
+    padding: 1.5rem;
   }
 }
 </style>

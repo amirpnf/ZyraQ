@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Service API (Backend)
+  api:
+    image: quiz-local-api
+    container_name: zyraq-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+    networks:
+      - zyraq-network
+    restart: unless-stopped
+
+  # Service UI (Frontend)
+  ui:
+    image: quiz-local-ui
+    container_name: zyraq-ui
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - zyraq-network
+    restart: unless-stopped
+
+networks:
+  zyraq-network:
+    driver: bridge

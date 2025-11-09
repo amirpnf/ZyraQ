@@ -6,7 +6,6 @@ const registeredScores = ref([]);
 const totalQuestions = ref(0);
 
 onMounted(async () => {
-  console.log('Home mounted');
   try {
     const response = await quizApiService.getQuizInfo();
     if (response && response.data) {
@@ -27,64 +26,68 @@ function getRankClass(index) {
 </script>
 
 <template>
-  <div class="color-drops">
-    <span v-for="n in 40" :key="n"></span>
-  </div>
-  <div class="container mt-5 mb-5 pb-5">
-    <div class="row justify-content-center">
-      <div class="contner col-md-10 col-lg-8">
-        <div class="contner-inner">
-          <div class="hero-section text-center mb-5">
-            <h1 class="display-3 fw-bold text-white mb-3">ZyraQ Quiz</h1>
-            <p class="lead text-white-50 mb-4">
-              Test tes connaissances avec {{ totalQuestions }} questions
-            </p>
-            <router-link to="/new-quiz" class="btn btn-gradient btn-lg px-5 py-3 shadow">
-              Démarrer le Quiz
-            </router-link>
+  <div class="page-wrapper">
+    <div class="container-fluid px-4 py-5">
+      <div class="main-grid">
+        <div class="hero-card contner">
+          <div class="contner-inner">
+            <div class="hero-content">
+              <img src="@/assets/logoZy.png" alt="ZyraQ Logo" class="hero-logo">
+              <p class="hero-description text-white-50 mb-5">
+                Teste tes connaissances avec <span class="highlight">{{ totalQuestions }} questions</span> passionnantes
+              </p>
+              <router-link to="/new-quiz" class="btn btn-gradient btn-lg px-5 py-3 shadow">
+                Démarrer le Quiz
+              </router-link>
+              
+              <div class="stats-mini mt-5">
+                <div class="stat-item">
+                  <div class="stat-number">{{ registeredScores.length }}</div>
+                  <div class="stat-label">Participants</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">{{ totalQuestions }}</div>
+                  <div class="stat-label">Questions</div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <!-- Tableau des scores intégré -->
-          <div class="scores-section">
-            <div class="scores-header text-center mb-4">
-              <h2 class="h4 mb-0 text-white">Tableau des Scores</h2>
-            </div>
-            <div v-if="registeredScores.length === 0" class="text-center py-5">
-              <p class="text-white-50 mb-0">Pas encore de scores. Sois le premier !</p>
-            </div>
-            <div v-else class="table-responsive">
-              <table class="table table-hover mb-0 table-custom">
-                <thead class="table-header-custom">
-                  <tr>
-                    <th class="px-4 py-3 text-white">Rang</th>
-                    <th class="px-4 py-3 text-white">Joueur</th>
-                    <th class="px-4 py-3 text-end text-white">Score</th>
-                    <th class="px-4 py-3 text-end text-white">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(scoreEntry, index) in registeredScores"
-                    :key="scoreEntry.date"
-                    class="score-row"
-                  >
-                    <td class="px-4 py-3">
-                      <span class="rank-badge" :class="getRankClass(index)">
-                        {{ index + 1 }}
-                      </span>
-                    </td>
-                    <td class="px-4 py-3 fw-semibold text-white">{{ scoreEntry.playerName }}</td>
-                    <td class="px-4 py-3 text-end">
-                      <span class="score-value text-white">
-                        {{ scoreEntry.score }} / {{ totalQuestions }}
-                      </span>
-                    </td>
-                    <td class="px-4 py-3 text-end text-white-50 small">
-                      {{ new Date(scoreEntry.date).toLocaleDateString('fr-FR') }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+        <div class="scores-card contner">
+          <div class="contner-inner">
+            <div class="scores-content">
+              <div class="scores-header mb-4">
+                <h2 class="scores-title text-white">
+                  Tableau des Scores
+                </h2>
+              </div>
+              
+              <div v-if="registeredScores.length === 0" class="empty-scores text-center py-5">
+                <p class="text-white-50 mb-0">Pas encore de scores.<br>Sois le premier à jouer !</p>
+              </div>
+              
+              <div v-else class="scores-list">
+                <div
+                  v-for="(scoreEntry, index) in registeredScores"
+                  :key="scoreEntry.date"
+                  class="score-item"
+                  :class="getRankClass(index)"
+                >
+                  <div class="score-rank">
+                    <span class="rank-number">{{ index + 1 }}</span>
+                  </div>
+                  <div class="score-info">
+                    <div class="player-name">{{ scoreEntry.playerName }}</div>
+                    <div class="score-date">{{ new Date(scoreEntry.date).toLocaleDateString('fr-FR') }}</div>
+                  </div>
+                  <div class="score-points">
+                    <span class="points">{{ scoreEntry.score }}</span>
+                    <span class="separator">/</span>
+                    <span class="total">{{ totalQuestions }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -94,187 +97,295 @@ function getRankClass(index) {
 </template>
 
 <style scoped>
-.hero-section {
-  padding: 3rem 0;
+.home-wrapper {
+  position: relative;
+  min-height: calc(100vh - 200px);
 }
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
 .contner {
-  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
-  padding: 9px;
-  border-radius: 39px;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  padding: 4px;
+  border-radius: 30px;
   z-index: 1;
+  height: 100%;
 }
 
 .contner-inner {
   background-color: #090043;
-  padding: 2rem;
-  border-radius: 30px;
+  padding: 3rem;
+  border-radius: 26px;
   width: 100%;
   height: 100%;
 }
 
-.scores-section {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.hero-card {
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
-.card {
-  border-radius: 15px;
-  overflow: hidden;
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  justify-content: center;
 }
 
-.card-header {
-  background-color: #090043 !important;
+.hero-logo {
+  max-width: 350px;
+  height: auto;
+  filter: drop-shadow(0 0 30px rgba(240, 189, 30, 0.6));
 }
 
-.table-custom {
-  background-color: #090043;
-  color: white;
+.hero-icon {
+  color: #f0bd1e;
 }
 
-.table-header-custom {
-  background-color: rgba(255, 255, 255, 0.1);
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.score-row {
-  transition: all 0.2s;
-  border-left: 3px solid transparent;
-  background-color: #090043;
+.hero-description {
+  font-size: 1.3rem;
+  line-height: 1.6;
 }
 
-.score-row:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-left-color: #f0bd1e;
+.highlight {
+  color: #f0bd1e;
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 
-.rank-badge {
-  display: inline-flex;
+.stats-mini {
+  display: flex;
+  gap: 3rem;
+  margin-top: 3rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.scores-card {
+  min-height: 600px;
+}
+
+.scores-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.scores-header {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.scores-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  background-color: #e9ecef;
-  color: #495057;
 }
 
-.rank-gold {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #856404;
+.empty-scores {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.rank-silver {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-  color: #383d41;
+.scores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
-.rank-bronze {
-  background: linear-gradient(135deg, #cd7f32 0%, #daa06d 100%);
-  color: #fff;
+.scores-list::-webkit-scrollbar {
+  width: 6px;
 }
 
-.score-value {
-  font-weight: 600;
-  color: #f0bd1e; /* couleur jaune du dégradé */
+.scores-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
 }
 
-.btn-light:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+.scores-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  border-radius: 10px;
 }
 
-.btn-gradient {
-  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
-  border: none;
-  color: white;
-  font-weight: 600;
+.score-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
 }
 
-.btn-gradient:hover {
-  background: linear-gradient(90deg, #cc13b5, #f0bd1e);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(204, 19, 181, 0.3) !important;
+.score-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #f0bd1e;
+  transform: translateX(5px);
+}
+
+.score-item.rank-gold {
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.score-item.rank-silver {
+  border-color: rgba(192, 192, 192, 0.5);
+  background: rgba(192, 192, 192, 0.1);
+}
+
+.score-item.rank-bronze {
+  border-color: rgba(205, 127, 50, 0.5);
+  background: rgba(205, 127, 50, 0.1);
+}
+
+.score-rank {
+  flex-shrink: 0;
+}
+
+.rank-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
   color: white;
+  font-weight: 800;
+  font-size: 1.2rem;
+  border-radius: 12px;
 }
 
-.color-drops {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
+.rank-gold .rank-number {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #856404;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
-.color-drops::before,
-.color-drops::after {
-  content: '';
-  position: absolute;
-  top: -10%;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  animation: fall 3s linear infinite;
+.rank-silver .rank-number {
+  background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+  color: #383d41;
+  box-shadow: 0 0 20px rgba(192, 192, 192, 0.5);
 }
 
-.color-drops::before {
-  background: red;
-  left: 25%;
-  animation-delay: 0s;
+.rank-bronze .rank-number {
+  background: linear-gradient(135deg, #cd7f32, #daa06d);
+  color: white;
+  box-shadow: 0 0 20px rgba(205, 127, 50, 0.5);
 }
 
-.color-drops::after {
-  background: limegreen;
-  left: 60%;
-  animation-delay: 2s;
+.score-info {
+  flex: 1;
 }
 
-@keyframes fall {
-  0% {
-    transform: translateY(-10%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(110vh) scale(0.8);
-    opacity: 0;
-  }
+.player-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.25rem;
 }
 
-.color-drops span {
-  position: absolute;
-  top: -10%;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  animation: fall 6s linear infinite;
+.score-date {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.color-drops span:nth-child(1) {
-  left: 10%;
-  background: #ff006e;
-  animation-delay: 1s;
+.score-points {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.color-drops span:nth-child(2) {
-  left: 40%;
-  background: #00ff88;
-  animation-delay: 2.5s;
+.points {
+  font-size: 1.8rem;
+  color: #f0bd1e;
 }
 
-.color-drops span:nth-child(3) {
-  left: 70%;
-  background: #00b4d8;
-  animation-delay: 3.2s;
+.separator {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
-.color-drops span:nth-child(4) {
-  left: 85%;
-  background: #ffbe0b;
-  animation-delay: 4s;
+.total {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  border: none;
+  color: white;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(135deg, #cc13b5, #f0bd1e);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(240, 189, 30, 0.4) !important;
+  color: white;
 }
 </style>

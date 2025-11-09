@@ -1,4 +1,3 @@
-<!-- QuestionComponent.vue -->
 <script setup>
 const props = defineProps({
   question: Object,
@@ -6,13 +5,9 @@ const props = defineProps({
   showNextButton: Boolean,
 });
 
-console.log('Question Data: ', props.question);
-
 const emit = defineEmits(['answer-clicked', 'next-question']);
 
 function selectAnswer(answerIndex) {
-  console.log('Selecting answer:', answerIndex, 'Current selected:', props.selectedAnswer);
-  // Emit always (parent can ignore duplicate clicks)
   emit('answer-clicked', answerIndex);
 }
 
@@ -22,47 +17,59 @@ function goToNextQuestion() {
 </script>
 
 <template>
-  <div class="question-container" v-if="question">
-    <div class="question-container-inner">
-      <div class="question-body p-5">
-        <div class="question-header mb-3 text-center">
-          <span class="badge bg-gradient fs-6">Question {{ question.position }}</span>
-        </div>
+  <div class="question-wrapper" v-if="question">
+    <div class="question-container">
+      <div class="question-container-inner">
+        <div class="question-grid">
+          <div class="question-section">
+            <div class="question-header mb-4">
+              <span class="badge bg-gradient">Question {{ question.position }}</span>
+            </div>
 
-        <h2 class="question-title mb-4 text-center text-white">{{ question.title }}</h2>
+            <h2 class="question-title text-white mb-4">{{ question.title }}</h2>
+            <h3 class="question-text text-white-75 mb-4">{{ question.text }}</h3>
 
-        <h3 class="question-text mb-4 text-center text-white-75">{{ question.text }}</h3>
-
-        <div v-if="question.image" class="text-center mb-4">
-          <div class="image-container">
-            <img
-              :src="question.image"
-              alt="Question image"
-              class="img-fluid rounded shadow-sm"
-              style="max-height: 300px"
-            />
+            <div v-if="question.image" class="question-image-wrapper">
+              <div class="image-container">
+                <img
+                  :src="question.image"
+                  alt="Image de la question"
+                  class="img-fluid rounded"
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Answers Section -->
-        <div class="answers-grid">
-          <button
-            v-for="(answer, index) in question.possibleAnswers"
-            :key="index"
-            @click="selectAnswer(index + 1)"
-            class="answer-btn"
-            :class="{
-              selected: selectedAnswer === index + 1,
-              }"
-          >
-            <span class="answer-letter">{{ String.fromCharCode(65 + index) }}</span>
-            <span class="answer-text">{{ answer }}</span>
-          </button>
-        </div>
+          <div class="answers-section">
+            <div class="answers-header mb-4">
+              <h4 class="text-white mb-0">
+                Choisissez votre réponse
+              </h4>
+            </div>
 
-        <!-- Next Question Button -->
-        <div v-if="showNextButton" class="next-button-container text-center mt-4">
-          <button @click="goToNextQuestion" class="next-question-btn">Question Suivante →</button>
+            <div class="answers-list">
+              <button
+                v-for="(answer, index) in question.possibleAnswers"
+                :key="index"
+                @click="selectAnswer(index + 1)"
+                class="answer-card"
+                :class="{
+                  selected: selectedAnswer === index + 1,
+                }"
+              >
+                <div class="answer-header">
+                  <span class="answer-letter">{{ String.fromCharCode(65 + index) }}</span>
+                </div>
+                <p class="answer-text">{{ answer }}</p>
+              </button>
+            </div>
+
+            <div v-if="showNextButton" class="next-button-wrapper">
+              <button @click="goToNextQuestion" class="next-question-btn">
+                Question Suivante →
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -78,21 +85,44 @@ function goToNextQuestion() {
 </template>
 
 <style scoped>
+.question-wrapper {
+  width: 100%;
+  max-width: 1800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
 .question-container {
   padding: 4px;
   background: linear-gradient(135deg, #f0bd1e, #cc13b5);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 .question-container-inner {
   background: #090043;
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
+  padding: 3rem;
 }
 
-.question-body {
-  background: #090043;
+.question-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .question-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.question-section {
+  position: sticky;
+  top: 2rem;
 }
 
 .question-header {
@@ -102,23 +132,25 @@ function goToNextQuestion() {
 .bg-gradient {
   background: linear-gradient(135deg, #f0bd1e, #cc13b5) !important;
   color: white;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 8px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 12px;
   border: none;
+  font-size: 1rem;
+  display: inline-block;
 }
 
 .question-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1.4;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.3;
   margin-bottom: 1.5rem;
 }
 
 .question-text {
-  font-size: 1.3rem;
-  font-weight: 500;
-  line-height: 1.4;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.6;
   margin-bottom: 2rem;
 }
 
@@ -126,112 +158,165 @@ function goToNextQuestion() {
   color: rgba(255, 255, 255, 0.75);
 }
 
+.question-image-wrapper {
+  margin-top: 2rem;
+}
+
 .image-container {
-  padding: 3px;
+  padding: 4px;
   background: linear-gradient(135deg, #f0bd1e, #cc13b5);
-  border-radius: 12px;
-  display: inline-block;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .image-container img {
-  border-radius: 9px;
+  border-radius: 12px;
   display: block;
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: cover;
 }
 
-.answers-grid {
-  display: grid;
-  gap: 1rem;
-  margin-top: 2rem;
+.answers-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.answer-btn {
+.answers-header {
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.answers-header h4 {
   display: flex;
   align-items: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.answers-list {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+}
+
+.answer-card {
   background: rgba(255, 255, 255, 0.05);
-  text-align: left;
-  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
   cursor: pointer;
-  font-size: 1rem;
-  color: white;
-  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
 }
 
-.answer-btn:hover {
-  border-color: rgba(240, 189, 30, 0.6);
-  background: rgba(240, 189, 30, 0.1);
+.answer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.answer-card:hover {
+  border-color: rgba(240, 189, 30, 0.5);
+  background: rgba(240, 189, 30, 0.08);
   transform: translateX(8px);
-  box-shadow: 0 4px 20px rgba(240, 189, 30, 0.3);
 }
 
-.answer-btn.selected {
+.answer-card:hover::before {
+  opacity: 1;
+}
+
+.answer-card.selected {
   border-color: #f0bd1e;
-  background: linear-gradient(135deg, rgba(240, 189, 30, 0.2), rgba(204, 19, 181, 0.2));
-  box-shadow: 0 4px 20px rgba(240, 189, 30, 0.4);
+  background: linear-gradient(135deg, rgba(240, 189, 30, 0.15), rgba(204, 19, 181, 0.15));
+  box-shadow: 0 8px 25px rgba(240, 189, 30, 0.3);
   transform: translateX(8px);
 }
 
-.answer-btn.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.answer-card.selected::before {
+  opacity: 1;
+  width: 6px;
 }
 
-.answer-btn.disabled:hover {
-  transform: none;
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: none;
+.answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 0.75rem;
 }
 
 .answer-letter {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   background: linear-gradient(135deg, #f0bd1e, #cc13b5);
   color: white;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 1.1rem;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1.3rem;
   flex-shrink: 0;
 }
 
-.answer-btn.selected .answer-letter {
+.answer-card.selected .answer-letter {
   background: linear-gradient(135deg, #48bb78, #38a169);
-  box-shadow: 0 0 15px rgba(72, 187, 120, 0.5);
+  box-shadow: 0 0 20px rgba(72, 187, 120, 0.6);
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 .answer-text {
-  flex: 1;
+  color: white;
+  font-size: 1.05rem;
   font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
 }
 
-.next-button-container {
-  margin-top: 2rem;
+.next-button-wrapper {
+  margin-top: 1rem;
   padding-top: 1.5rem;
   border-top: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .next-question-btn {
+  width: 100%;
   background: linear-gradient(135deg, #f0bd1e, #cc13b5);
   color: white;
   border: none;
-  padding: 1rem 2.5rem;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  padding: 1.25rem 2rem;
+  border-radius: 14px;
+  font-size: 1.15rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(240, 189, 30, 0.3);
+  box-shadow: 0 6px 20px rgba(240, 189, 30, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .next-question-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(240, 189, 30, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px rgba(240, 189, 30, 0.6);
+  background: linear-gradient(135deg, #cc13b5, #f0bd1e);
 }
 
 .alert-container {
@@ -239,6 +324,8 @@ function goToNextQuestion() {
   background: linear-gradient(135deg, #f0bd1e, #cc13b5);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  margin: 3rem auto;
 }
 
 .alert-container-inner {
@@ -252,37 +339,40 @@ function goToNextQuestion() {
   color: #ffc107;
   border: 1px solid rgba(255, 193, 7, 0.3);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 2rem;
   margin: 1rem;
   backdrop-filter: blur(10px);
 }
 
 @media (max-width: 768px) {
-  .question-container {
-    padding: 2px;
+  .question-container-inner {
+    padding: 1.5rem;
   }
   
   .question-title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
   
   .question-text {
-    font-size: 1.1rem;
-  }
-  
-  .answer-btn {
-    padding: 1rem;
-    font-size: 0.9rem;
-  }
-  
-  .answer-letter {
-    width: 35px;
-    height: 35px;
     font-size: 1rem;
   }
   
+  .answer-card {
+    padding: 1.25rem;
+  }
+  
+  .answer-letter {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+  
+  .answer-text {
+    font-size: 0.95rem;
+  }
+  
   .next-question-btn {
-    padding: 0.875rem 2rem;
+    padding: 1rem 1.5rem;
     font-size: 1rem;
   }
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import participationStorageService from '@/services/ParticipationStorageService';
 
@@ -24,58 +24,80 @@ function restartQuiz() {
 function goHome() {
   router.push('/');
 }
+
+function getMessageClass() {
+  if (score.value >= 8) return 'message-excellent';
+  if (score.value >= 5) return 'message-good';
+  return 'message-keep-going';
+}
+
+function getMessageTitle() {
+  if (score.value >= 8) return 'Excellent !';
+  if (score.value >= 5) return 'Pas mal !';
+  return 'Continue !';
+}
+
+function getMessageText() {
+  if (score.value >= 8) return 'Tu maîtrises parfaitement le sujet. Bravo !';
+  if (score.value >= 5) return 'Tu as de bonnes bases, continue comme ça.';
+  return 'Tu vas progresser, ne lâche rien !';
+}
+
+function getCircleProgress() {
+  const totalQuestions = 10;
+  const circumference = 2 * Math.PI * 95;
+  const progress = (score.value / totalQuestions) * circumference;
+  return circumference - progress;
+}
 </script>
 
 <template>
-  <div class="color-drops">
-    <span v-for="n in 40" :key="n"></span>
-  </div>
-  <div class="container mt-5 mb-5 pb-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="score-container">
-          <div class="score-container-inner text-center p-5">
-            <div class="success-icon mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-              </svg>
-            </div>
-            
-            <h1 class="text-white mb-3">Quiz Terminé</h1>
-            <p class="lead text-white-50 mb-4">{{ playerName }}</p>
-            
-            <div class="score-display-wrapper my-5">
-              <div class="score-display">
-                <div class="score-number">{{ score }}</div>
-                <div class="score-label">points</div>
+  <div class="score-page-wrapper">
+    <div class="container-fluid px-4 py-5">
+      <div class="score-layout">
+        <div class="main-score-card contner">
+          <div class="contner-inner">
+            <div class="score-content text-center">
+              <h1 class="completion-title text-white mb-2">Quiz Terminé !</h1>
+              <p class="player-name-display text-white-50 mb-5">{{ playerName }}</p>
+
+              <div class="score-circle-wrapper mb-5">
+                <div class="score-circle">
+                  <svg class="progress-ring" width="220" height="220">
+                    <circle
+                      class="progress-ring-bg"
+                      cx="110"
+                      cy="110"
+                      r="95"
+                    />
+                    <circle
+                      class="progress-ring-progress"
+                      cx="110"
+                      cy="110"
+                      r="95"
+                      :style="{ strokeDashoffset: getCircleProgress() }"
+                    />
+                  </svg>
+                  <div class="score-inner">
+                    <div class="score-number-large">{{ score }}</div>
+                    <div class="score-total-label">points</div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div v-if="score >= 8" class="alert alert-success-custom border-0" role="alert">
-              <strong>Excellent !</strong> Tu maîtrises bien le sujet
-            </div>
-            <div v-else-if="score >= 5" class="alert alert-info-custom border-0" role="alert">
-              <strong>Pas mal !</strong> Tu as de bonnes bases
-            </div>
-            <div v-else class="alert alert-warning-custom border-0" role="alert">
-              <strong>Continue !</strong> Tu vas progresser
-            </div>
+              <div class="message-card" :class="getMessageClass()">
+                <h3 class="message-title">{{ getMessageTitle() }}</h3>
+                <p class="message-text">{{ getMessageText() }}</p>
+              </div>
 
-            <div class="d-grid gap-3 mt-4">
-              <button
-                type="button"
-                class="btn btn-gradient btn-lg"
-                @click="restartQuiz"
-              >
-                Recommencer
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline-light"
-                @click="goHome"
-              >
-                Retour à l'accueil
-              </button>
+              <div class="action-buttons mt-5">
+                <button class="btn btn-gradient btn-lg px-5 mb-3" @click="restartQuiz">
+                  Recommencer
+                </button>
+                <button class="btn btn-outline-light btn-lg px-5" @click="goHome">
+                  Retour à l'accueil
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -85,104 +107,30 @@ function goHome() {
 </template>
 
 <style scoped>
-/* Animation des gouttes de couleur */
-.color-drops {
-  position: fixed;
-  top: 0;
-  left: 0;
+.score-page-wrapper {
+  min-height: calc(100vh - 200px);
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.score-layout {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
-.color-drops::before,
-.color-drops::after {
-  content: '';
-  position: absolute;
-  top: -10%;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  animation: fall 3s linear infinite;
+.contner {
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  padding: 4px;
+  border-radius: 35px;
+  animation: slideUp 0.6s ease-out;
 }
 
-.color-drops::before {
-  background: red;
-  left: 25%;
-  animation-delay: 0s;
-}
-
-.color-drops::after {
-  background: limegreen;
-  left: 60%;
-  animation-delay: 2s;
-}
-
-@keyframes fall {
-  0% {
-    transform: translateY(-10%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(110vh) scale(0.8);
-    opacity: 0;
-  }
-}
-
-.color-drops span {
-  position: absolute;
-  top: -10%;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  animation: fall 6s linear infinite;
-}
-
-.color-drops span:nth-child(1) {
-  left: 10%;
-  background: #ff006e;
-  animation-delay: 1s;
-}
-
-.color-drops span:nth-child(2) {
-  left: 40%;
-  background: #00ff88;
-  animation-delay: 2.5s;
-}
-
-.color-drops span:nth-child(3) {
-  left: 70%;
-  background: #00b4d8;
-  animation-delay: 3.2s;
-}
-
-.color-drops span:nth-child(4) {
-  left: 85%;
-  background: #ffbe0b;
-  animation-delay: 4s;
-}
-
-/* Conteneur principal */
-.score-container {
-  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
-  padding: 9px;
-  border-radius: 39px;
-  animation: slideIn 0.5s ease-out;
-}
-
-.score-container-inner {
-  background-color: #090043;
-  border-radius: 30px;
-  width: 100%;
-  height: 100%;
-}
-
-@keyframes slideIn {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -190,82 +138,205 @@ function goHome() {
   }
 }
 
-.success-icon {
-  color: #f0bd1e;
-}
-
-.score-display-wrapper {
+.contner-inner {
+  background-color: #090043;
+  padding: 4rem 3rem;
+  border-radius: 31px;
   position: relative;
+  overflow: hidden;
 }
 
-.score-display {
-  display: inline-block;
-  padding: 2rem 3rem;
-  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(240, 189, 30, 0.3);
+.score-content {
+  position: relative;
+  z-index: 1;
 }
 
-.score-number {
+.completion-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.player-name-display {
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.score-circle-wrapper {
+  display: flex;
+  justify-content: center;
+  animation: fadeIn 1s ease-out 0.3s both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.score-circle {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 12;
+}
+
+.progress-ring-progress {
+  fill: none;
+  stroke: url(#gradient);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 596.9;
+  transition: stroke-dashoffset 1.5s ease-out;
+}
+
+.score-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.score-number-large {
   font-size: 4rem;
-  font-weight: 700;
-  color: white;
+  font-weight: 800;
+  color: #f0bd1e;
   line-height: 1;
+  text-shadow: 0 0 30px rgba(240, 189, 30, 0.5);
 }
 
-.score-label {
+.score-total-label {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-top: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   letter-spacing: 2px;
+  margin-top: 0.5rem;
 }
 
-/* Boutons */
+.message-card {
+  padding: 2rem;
+  border-radius: 20px;
+  margin: 2rem auto;
+  max-width: 500px;
+  animation: slideIn 1s ease-out 0.5s both;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.message-excellent {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 211, 119, 0.15));
+  border: 2px solid rgba(0, 255, 136, 0.3);
+}
+
+.message-good {
+  background: linear-gradient(135deg, rgba(0, 180, 216, 0.15), rgba(0, 119, 182, 0.15));
+  border: 2px solid rgba(0, 180, 216, 0.3);
+}
+
+.message-keep-going {
+  background: linear-gradient(135deg, rgba(255, 190, 11, 0.15), rgba(251, 133, 0, 0.15));
+  border: 2px solid rgba(255, 190, 11, 0.3);
+}
+
+.message-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.message-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fadeIn 1.2s ease-out 0.7s both;
+}
+
 .btn-gradient {
-  background: linear-gradient(90deg, #f0bd1e, #cc13b5);
+  background: linear-gradient(135deg, #f0bd1e, #cc13b5);
   border: none;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .btn-gradient:hover {
-  background: linear-gradient(90deg, #cc13b5, #f0bd1e);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(204, 19, 181, 0.3) !important;
+  background: linear-gradient(135deg, #cc13b5, #f0bd1e);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px rgba(240, 189, 30, 0.5) !important;
   color: white;
 }
 
 .btn-outline-light {
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   color: rgba(255, 255, 255, 0.8);
-  background: #090043;
+  background: transparent;
   transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
 }
 
 .btn-outline-light:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-color: white;
   color: white;
+  transform: translateY(-2px);
 }
 
-/* Alerts personnalisées */
-.alert-success-custom {
-  background: linear-gradient(135deg, #00ff88, #00d377);
-  color: white;
-  border-radius: 15px;
-}
-
-.alert-info-custom {
-  background: linear-gradient(135deg, #00b4d8, #0077b6);
-  color: white;
-  border-radius: 15px;
-}
-
-.alert-warning-custom {
-  background: linear-gradient(135deg, #ffbe0b, #fb8500);
-  color: white;
-  border-radius: 15px;
+@media (max-width: 768px) {
+  .contner-inner {
+    padding: 3rem 2rem;
+  }
+  
+  .completion-title {
+    font-size: 2.2rem;
+  }
+  
+  .score-circle {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .score-number-large {
+    font-size: 3rem;
+  }
+  
+  .message-title {
+    font-size: 1.5rem;
+  }
 }
 </style>

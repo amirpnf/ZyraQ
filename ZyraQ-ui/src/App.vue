@@ -46,7 +46,6 @@ import { RouterView } from 'vue-router';
   flex: 1;
 }
 
-/* Navbar personnalisée */
 .custom-navbar {
   background: linear-gradient(90deg, #f0bd1e, #cc13b5) !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -80,7 +79,6 @@ import { RouterView } from 'vue-router';
   color: white !important;
 }
 
-/* Footer personnalisé */
 .custom-footer {
   background: linear-gradient(90deg, #cc13b5, #f0bd1e);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
