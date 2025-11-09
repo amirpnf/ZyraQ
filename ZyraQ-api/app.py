@@ -53,7 +53,7 @@ def GetQuizInfo():
 @app.route('/login', methods=['POST'])
 def PostLogin():
     payload = request.get_json()
-    if payload and payload.get("password") == "OuiStiti":	
+    if payload and payload.get("password") == "iloveflask":	
         token = build_token()
         return {"token": token}, 200
     return 'Unauthorized', 401
