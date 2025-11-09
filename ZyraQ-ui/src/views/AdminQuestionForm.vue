@@ -217,14 +217,15 @@ function cancel() {
 
               <div class="mb-4">
                 <label for="text" class="input-label text-white">
-                  Description
+                  Question <span class="text-danger">*</span>
                 </label>
                 <textarea
                   id="text"
                   class="custom-input"
                   v-model="formData.text"
                   rows="4"
-                  placeholder="Description additionnelle (optionnel)"
+                  placeholder="Entrez votre question ici"
+                  required
                 ></textarea>
               </div>
 

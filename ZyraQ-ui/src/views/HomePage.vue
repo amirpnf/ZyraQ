@@ -79,7 +79,6 @@ function getRankClass(index) {
                   </div>
                   <div class="score-info">
                     <div class="player-name">{{ scoreEntry.playerName }}</div>
-                    <div class="score-date">{{ new Date(scoreEntry.date).toLocaleDateString('fr-FR') }}</div>
                   </div>
                   <div class="score-points">
                     <span class="points">{{ scoreEntry.score }}</span>

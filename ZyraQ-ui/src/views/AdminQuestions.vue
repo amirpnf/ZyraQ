@@ -203,7 +203,7 @@ function logout() {
                   <div class="question-id">#{{ q.id }}</div>
                 </div>
                 <div class="question-card-body">
-                  <h4 class="question-title text-white">{{ q.title }}</h4>
+                  <h4 class="question-title text-white">{{ q.text }}</h4>
                 </div>
                 <div class="question-card-actions">
                   <button @click="editQuestion(q.id)" class="btn-edit">

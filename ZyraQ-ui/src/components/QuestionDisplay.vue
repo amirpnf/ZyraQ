@@ -60,7 +60,7 @@ function goToNextQuestion() {
                 <div class="answer-header">
                   <span class="answer-letter">{{ String.fromCharCode(65 + index) }}</span>
                 </div>
-                <p class="answer-text">{{ answer }}</p>
+                <p class="answer-text">{{ answer.text }}</p>
               </button>
             </div>
 
